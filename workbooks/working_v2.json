@@ -1,0 +1,635 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## Priority Compliance Issues \n"
+      },
+      "name": "text - 2"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "a0259937-eda6-430d-bf13-6c07bfd4e32b",
+            "version": "KqlParameterItem/1.0",
+            "name": "DefaultSubscription_Internal",
+            "type": 1,
+            "isRequired": true,
+            "isGlobal": true,
+            "query": "ResourceContainers\r\n| where type == \"microsoft.resources/subscriptions\"\r\n| project value = subscriptionId, label = subscriptionId\r\n",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 0
+            },
+            "timeContextFromParameter": "TimeRange",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "84ca1870-93c6-4a43-a5fb-792886ab1eca",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "d213ef66-f7cd-4e8f-bd05-d7811577fb61",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "isRequired": true,
+            "isGlobal": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": false,
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 0
+            },
+            "timeContextFromParameter": "TimeRange"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 1"
+    },
+    {
+      "type": 11,
+      "content": {
+        "version": "LinkItem/1.0",
+        "style": "tabs",
+        "links": [
+          {
+            "id": "0d07fb2d-b76e-4e9d-8a68-894237cadec4",
+            "cellValue": "mainTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Key Vault ",
+            "subTarget": "alerts",
+            "style": "link"
+          },
+          {
+            "id": "918a3880-2818-48e0-8fae-b31c3020e22c",
+            "cellValue": "mainTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Unattached Disks",
+            "subTarget": "diagnostics",
+            "style": "link"
+          },
+          {
+            "id": "590e729d-bf07-4670-8bbe-709f9d03a774",
+            "cellValue": "mainTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Storage Accounts",
+            "subTarget": "Storage Accounts",
+            "style": "link"
+          },
+          {
+            "id": "8afbb3c6-4eaf-4388-a01d-f1c6613e294c",
+            "cellValue": "mainTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Service Bus",
+            "subTarget": "Service Bus",
+            "style": "link"
+          }
+        ]
+      },
+      "name": "links - 6"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Unattached Disks"
+            },
+            "name": "text - 0"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Resources\r\n| where type has \"microsoft.compute/disks\" \r\n| extend diskState = tostring(properties.diskState)\r\n| where managedBy == \"\" or diskState == 'Unattached'\r\n| project id, diskState, resourceGroup, location, subscriptionId\r\n",
+              "size": 0,
+              "showAnalytics": true,
+              "title": "Enter Emass ID - Unattached Disks",
+              "showRefreshButton": true,
+              "showExportToExcel": true,
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "value::all"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Diagnostic logs",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "false",
+                          "representation": "4",
+                          "text": ""
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "success",
+                          "text": ""
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Diagnostic settings",
+                    "formatter": 7,
+                    "formatOptions": {
+                      "linkTarget": "Url"
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "customWidth": "50",
+            "name": "Unattached Disks "
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Resources\r\n| where type has \"microsoft.compute/disks\"\r\n| extend diskState = tostring(properties.diskState)\r\n| where managedBy == \"\" or diskState == 'Unattached'\r\n| summarize count ()",
+              "size": 2,
+              "title": "Total Count",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "value::all"
+              ],
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {},
+                "leftContent": {
+                  "columnMatch": "count_",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  }
+                },
+                "showBorder": false
+              }
+            },
+            "customWidth": "15",
+            "name": "query - 2"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "### Microsoft_Azure_Foundations_Benchmark_v2.1.0 1-7.4\r\n<p> Managed disks are encrypted by default with Platform-managed keys. Using Customer-managed keys may provide an additional level of security or meet an organization's regulatory requirements. Encrypting managed disks ensures that its entire content is fully unrecoverable without a key and thus protects the volume from unwarranted reads. \r\nEven if the disk is not attached to any of the VMs, there is always a risk where a compromised user account with administrative access to VM service can mount/attach these data disks, which may lead to sensitive information disclosure and tampering.\r\n\r\n#### [VA Baseline](https://dvagov.sharepoint.com/sites/OITBCM/Lists/Secure_Configuration_Baselines/DispForm.aspx?ID=244&env=WebViewList&loadFormWithNucleus=1&id=*)",
+              "style": "info"
+            },
+            "customWidth": "35",
+            "name": "text - 3"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "diagnostics"
+      },
+      "name": "group - 7",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Key Vaults coverage"
+                  },
+                  "name": "text - 9"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "Resources\r\n| where type == \"microsoft.keyvault/vaults\"\r\n| extend properties = parse_json(properties)\r\n| extend publicNetworkAccess = tostring(properties.publicNetworkAccess)\r\n| where publicNetworkAccess =~ \"Enabled\"\r\n| extend va_emass_id = tostring(tags['va_emass_id'])\r\n| project name, va_emass_id, publicNetworkAccess, resourceGroup\r\n\r\n\r\n ",
+                          "size": 0,
+                          "showAnalytics": true,
+                          "title": "Enter Emass ID",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "value::all"
+                          ],
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "Defender for Key Vault",
+                                "formatter": 18,
+                                "formatOptions": {
+                                  "thresholdsOptions": "icons",
+                                  "thresholdsGrid": [
+                                    {
+                                      "operator": "==",
+                                      "thresholdValue": "no",
+                                      "representation": "4",
+                                      "text": ""
+                                    },
+                                    {
+                                      "operator": "Default",
+                                      "thresholdValue": null,
+                                      "representation": "success",
+                                      "text": ""
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "columnMatch": "Onboard Azure Defender",
+                                "formatter": 7,
+                                "formatOptions": {
+                                  "linkTarget": "Url"
+                                }
+                              }
+                            ],
+                            "filter": true
+                          }
+                        },
+                        "customWidth": "50",
+                        "name": "query - 3"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "Resources\r\n| where type == \"microsoft.keyvault/vaults\"\r\n| extend properties = parse_json(properties)\r\n| extend publicNetworkAccess = tostring(properties.publicNetworkAccess)\r\n| where publicNetworkAccess =~ \"Enabled\"\r\n| summarize count() by publicNetworkAccess",
+                          "size": 4,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "value::all"
+                          ],
+                          "visualization": "tiles",
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "publicNetworkAccess",
+                              "formatter": 1
+                            },
+                            "leftContent": {
+                              "columnMatch": "count_",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "auto"
+                              }
+                            },
+                            "showBorder": false
+                          },
+                          "chartSettings": {
+                            "yAxis": [
+                              "count_"
+                            ],
+                            "ySettings": {
+                              "numberFormatSettings": {
+                                "unit": 0,
+                                "options": {
+                                  "style": "decimal",
+                                  "useGrouping": false
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "customWidth": "15",
+                        "name": "query - 4"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "### Service bus\r\n<p> Azure Service Bus should have public network access disabled. Disabling public network access improves security by ensuring that the resource isn't exposed on the public internet. You can limit exposure of your resources by creating private endpoints instead. Learn more at: https://docs.microsoft.com/azure/service-bus-messaging/private-link-service",
+                          "style": "info"
+                        },
+                        "customWidth": "35",
+                        "conditionalVisibility": {
+                          "parameterName": "mainTab",
+                          "comparison": "isEqualTo",
+                          "value": "Service Bus"
+                        },
+                        "name": "text - 3"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "## Key Vault Public URL \r\n\r\n## Azure CIS v2.0 Key Vault > 8.07 \r\n<p> Azure CIS (Center for Internet Security) Benchmark v2.0, item 8.07, specifically recommends ensuring the use of private endpoints for Azure Key Vault. Private endpoints provide a secure and private connection to Azure Key Vault by using a private IP address from within your virtual network. This helps in reducing exposure to threats by eliminating the need for internet-facing endpoints and enhances the security of sensitive data stored within the Key Vault by restricting access to only within the defined virtual network.\r\n\r\n#### [VA Baseline](https://dvagov.sharepoint.com/sites/OITBCM/Lists/Secure_Configuration_Baselines/DispForm.aspx?ID=244&env=WebViewList&loadFormWithNucleus=1&id=*)",
+                          "style": "info"
+                        },
+                        "customWidth": "35",
+                        "name": "text - 3"
+                      }
+                    ]
+                  },
+                  "name": "group - 7"
+                }
+              ]
+            },
+            "conditionalVisibility": {
+              "parameterName": "mainTab",
+              "comparison": "isEqualTo",
+              "value": "alerts"
+            },
+            "name": "group - 10",
+            "styleSettings": {
+              "showBorder": true
+            }
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "alerts"
+      },
+      "name": "defenderAlertsTabGroup"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Resources\r\n| where type =~ 'microsoft.servicebus/namespaces'\r\n| where properties.publicNetworkAccess == 'Enabled'\r\n| project \r\n    VA_EMASS_ID   = tostring(tags[\"va_emass_id\"]),\r\n    SubscriptionId = subscriptionId,\r\n    ResourceGroup = resourceGroup,\r\n    Name          = name,    \r\n    PublicAccess  = properties.publicNetworkAccess    \r\n| order by SubscriptionId, VA_EMASS_ID, ResourceGroup, Name\r\n",
+        "size": 0,
+        "title": "Enter Emass ID- Service Bus",
+        "showRefreshButton": true,
+        "showExportToExcel": true,
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "value::all"
+        ],
+        "gridSettings": {
+          "filter": true
+        },
+        "tileSettings": {
+          "showBorder": false,
+          "titleContent": {
+            "columnMatch": "publicNetworkAccess",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Count",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "maximumSignificantDigits": 3,
+                "maximumFractionDigits": 2
+              }
+            }
+          }
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Service Bus"
+      },
+      "customWidth": "50",
+      "name": "query - 11"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Resources\r\n| where type =~ 'microsoft.servicebus/namespaces'\r\n| where properties.publicNetworkAccess == 'Enabled'\r\n| summarize EnabledServiceBus = count()",
+        "size": 0,
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "value::all"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "publicNetworkAccess",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "EnabledServiceBus",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 2,
+                "maximumSignificantDigits": 3
+              }
+            }
+          },
+          "showBorder": false
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Service Bus"
+      },
+      "customWidth": "15",
+      "name": "query - 11"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## VA-Microsoft_Azure_Foundations_Benchmark_v2.1.0 1-10.25 \r\n### Service Bus Namespaces should disable public network access\r\n<p>Azure Service Bus should have public network access disabled. Disabling public network access improves security by ensuring that the resource isn't exposed on the public internet. You can limit exposure of your resources by creating private endpoints instead. Learn more at: https://docs.microsoft.com/azure/service-bus-messaging/private-link-service\r\n\r\n#### [VA Baseline](https://dvagov.sharepoint.com/sites/OITBCM/Lists/Secure_Configuration_Baselines/DispForm.aspx?ID=244&env=WebViewList&loadFormWithNucleus=1&id=*)",
+        "style": "info"
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Service Bus"
+      },
+      "customWidth": "35",
+      "name": "text - 10"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources \r\n| where type == 'microsoft.storage/storageaccounts'\r\n| project name, resourceGroup, location, id, type, subscriptionId, tags, properties\r\n| extend typeDisplayName = case(type =~ 'microsoft.storage/storageaccounts', 'Storage', type)\r\n| extend locationDisplayName = case(\r\n    location =~ 'usgovvirginia', 'USGov Virginia',\r\n    location =~ 'global', 'Global',\r\n    location =~ 'usdod', 'USDoD',\r\n    location =~ 'usgov', 'USGov',\r\n    location =~ 'usgovarizona', 'USGov Arizona',\r\n    location =~ 'usdodcentral', 'USDoD Central',\r\n    location =~ 'usdodeast', 'USDoD East',\r\n    location =~ 'usgovtexas', 'USGov Texas',\r\n    location\r\n)\r\n| extend va_emass_id = tostring(tags['va_emass_id'])\r\n| extend CKID = tostring(tags['CKID'])\r\n| extend va_vasi_id = tostring(tags['va_vasi_id'])\r\n| extend va_app_owner = tostring(tags['va_app_owner'])\r\n| project name, resourceGroup, va_app_owner, CKID, va_vasi_id, va_emass_id, tags\r\n| order by tostring(name) asc",
+        "size": 0,
+        "title": "Enter Emass ID - Storage Accounts",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "value::all"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "filter": true
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Storage Accounts"
+      },
+      "customWidth": "50",
+      "name": "query - 8"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Resources\r\n| where type =~ 'microsoft.storage/storageaccounts'\r\n| extend publicAccess = tostring(properties.networkAcls.defaultAction)\r\n| where publicAccess =~ 'Allow'\r\n| summarize count()",
+        "size": 0,
+        "title": "Total Count",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "value::all"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {},
+          "leftContent": {
+            "columnMatch": "count_",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            }
+          },
+          "showBorder": false
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Storage Accounts"
+      },
+      "customWidth": "15",
+      "name": "query - 9"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### VA-Microsoft_Azure_Foundations_Benchmark_v2.1.0 1-10.31\r\n<p> The Office of Operations, Security, and Preparedness (OSP) in conjunction with Office of Information & Technology (OIT) and Office of Information Security (OIS) are responsible for employing access control policies (e.g., identity-based policies, role-based policies, rule-based policies) and associated access enforcement mechanisms (e.g., access control lists, access control matrices, cryptography) to control access between users (or processes acting on behalf of users) and objects (e.g., devices, files, records, processes, programs, domains) in the information system. The Information System Owner (ISO)  is responsible for control access at the information system level, including access enforcement mechanisms at the application level, when necessary, to provide increased information security for VA.\r\n\r\n#### [VA Baseline](https://dvagov.sharepoint.com/sites/OITBCM/Lists/Secure_Configuration_Baselines/DispForm.aspx?ID=244&env=WebViewList&loadFormWithNucleus=1&id=*)",
+        "style": "info"
+      },
+      "conditionalVisibility": {
+        "parameterName": "mainTab",
+        "comparison": "isEqualTo",
+        "value": "Storage Accounts"
+      },
+      "customWidth": "35",
+      "name": "text - 10",
+      "styleSettings": {
+        "margin": "35"
+      }
+    }
+  ],
+  "fallbackResourceIds": [
+    "Azure Monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

@@ -1,0 +1,449 @@
+// Run query to see results.
+resources
+| where (type =~ "microsoft.hybridcompute/machines" and kind =~ "AVS") or type =~ "microsoft.compute/virtualmachines"
+| extend nics=array_length(properties.networkProfile.networkInterfaces)
+| extend customLocation = extract(@"(?:[^\/])+$", 0, tostring(extendedLocation.name))
+| extend modLocation = case (
+		location =~ 'eastus', 'East US',
+		location =~ 'eastus2', 'East US2',
+		location =~ 'westus', 'West US',
+		location =~ 'westus2', 'West US2',
+		location =~ 'southcentralus', 'South Central US',
+		location =~ 'westeurope', 'West Europe',
+		location =~ 'southeastasia', 'South East Asia',
+		location =~ 'northeurope', 'North Europe',
+		location =~ 'centralUS', 'Central US',
+		location)
+| extend location = iff(isnotempty(customLocation) and isnotnull(customLocation), strcat(customLocation, " (", modLocation, ")"), location)
+| extend os = case(
+			properties.storageProfile.osDisk.osType =~ 'Windows' or properties.osProfile.osType =~ 'Windows', 'Windows',
+			properties.storageProfile.osDisk.osType =~ 'Linux' or properties.osProfile.osType =~ 'Linux', 'Linux',
+			'-'
+    )
+| extend assessmentMode = iff(properties.storageProfile.osDisk.osType =~ 'Windows' or properties.osProfile.osType =~ 'Windows',
+        properties.osProfile.windowsConfiguration.patchSettings.assessmentMode,
+        properties.osProfile.linuxConfiguration.patchSettings.assessmentMode)
+| extend periodicAssessment = iff(isnotnull(assessmentMode) and assessmentMode =~ "AutomaticByPlatform", true, false)
+| mvexpand nic=properties.networkProfile.networkInterfaces limit 400
+| where (type == "microsoft.compute/virtualmachines" and nics == 1 or nic.properties.primary =~ 'true' or isempty(nic)) or type <> "microsoft.compute/virtualmachines"
+| project
+        id,
+        name,
+        resourceGroup,
+        type,
+        kind,
+        location,
+        timeCreated = iff(isnotempty(todatetime(properties.timeCreated)), format_datetime(todatetime(properties.timeCreated),'yyyy-MM-dd HH:mm:ss'), '-'),
+        timeCreatedForSort = iff(isnotempty(todatetime(properties.timeCreated)), todatetime(properties.timeCreated), datetime(1971-01-01)), // using 1971-01-01 to group all instances missing this property together
+        edgeZone = iff(tostring(extendedLocation.type) =~ 'EdgeZone', tostring(extendedLocation.name), '-'),
+        subscriptionId,
+        tags,
+        licenseType=case(
+            properties.licenseType =~ 'Windows_Server', 'Azure Hybrid Benefit for Windows',
+            properties.licenseType =~ 'Windows_Client', 'Windows client with multi-tenant hosting',
+            properties.licenseType =~ 'RHEL_BYOS', 'Azure Hybrid Benefit for Redhat',
+            properties.licenseType =~ 'SLES_BYOS', 'Azure Hybrid Benefit for SUSE',
+            'Not enabled'
+        ),
+        nics = coalesce(tostring(nics), '-'),
+        zones = coalesce(tostring(zones[0]), '-'),
+        os,
+        publisher = coalesce(
+            tostring(properties.storageProfile.imageReference.publisher),
+            '-'
+        ),
+        offer = coalesce(
+            tostring(properties.storageProfile.imageReference.offer),
+            '-'
+        ),
+        sku = coalesce(
+            tostring(properties.storageProfile.imageReference.sku),
+            '-'
+        ),
+        usesManagedDisks = iff(
+            isnotempty(properties.storageProfile.osDisk.managedDisk), 'Yes',
+            'No'
+        ),
+        disks = case(
+				type == "microsoft.compute/virtualmachines", tostring(iff(isnotempty(properties.storageProfile.osDisk) and isnotnull(properties.storageProfile.osDisk), 1, 0) + coalesce(array_length(properties.storageProfile.dataDisks), 0)),
+				type == "microsoft.azurestackhci/virtualmachines", tostring(iff(isnotnull(properties.storageProfile.dataDisks) and isnotempty(properties.storageProfile.dataDisks), array_length(properties.storageProfile.dataDisks), 0)),
+				type == "microsoft.connectedvmwarevsphere/virtualmachines" or type == "microsoft.scvmm/virtualmachines", tostring(iff(isnotnull(properties.storageProfile.disks) and isnotempty(properties.storageProfile.disks), array_length(properties.storageProfile.disks), 0)),
+				'-'
+		),
+        source = coalesce(
+            case(
+                (isnotnull(properties.storageProfile.imageReference.publisher) and isnotempty(properties.storageProfile.imageReference.publisher)), 'Marketplace',
+                (isnotnull(properties.storageProfile.imageReference.id) and isnotempty(properties.storageProfile.imageReference.id) and properties.storageProfile.imageReference contains "Microsoft.Compute/images"), 'Image',
+                (isnotnull(properties.storageProfile.imageReference.id) and isnotempty(properties.storageProfile.imageReference.id) and properties.storageProfile.imageReference contains "Microsoft.Compute/galleries"), 'Shared image',
+                'Disk'
+            ),
+            '-'
+        ),
+        spotEvictionPolicy = case(
+            (properties.priority =~ "Low" or properties.priority =~ "Spot") and properties.evictionPolicy =~ "Deallocate", 'Stop / Deallocate',
+            (properties.priority =~ "Low" or properties.priority =~ "Spot"), 'Delete',
+            '-'
+        ),
+        azureSpot = iff(
+            (isnotempty(properties.evictionPolicy)), 'Yes',
+            'No'),
+        spotEvictionType = case(
+            (properties.priority =~ "Low" or properties.priority =~ "Spot") and properties.billingProfile.maxPrice == -1, 'Capacity',
+            (properties.priority =~ "Low" or properties.priority =~ "Spot"), 'Price or capacity',
+            '-'
+        ),
+        spotPrice = case(
+            (properties.priority =~ "Low" or properties.priority =~ "Spot") and isnotnull(properties.billingProfile.maxPrice) and isnotempty(properties.billingProfile.maxPrice) and properties.billingProfile.maxPrice != -1, strcat("$ ", round(toreal(properties.billingProfile.maxPrice), 2)),
+            (properties.priority =~ "Low" or properties.priority =~ "Spot") and (isnull(properties.billingProfile.maxPrice) or isempty(properties.billingProfile.maxPrice)), 'Capacity',
+            '-'
+        ),
+        proximityPlacementGroup = coalesce(extract('/proximityPlacementGroups/(.*)', 1, tostring(properties.proximityPlacementGroup.id)), '-'),
+        host = coalesce(extract('/hosts/(.*)', 1, tostring(properties.host.id)), '-'),
+        availabilitySet = coalesce(extract('/availabilitySets/(.*)', 1, tostring(properties.availabilitySet.id)), '-'),
+        vmSize = coalesce(tostring(properties.hardwareProfile.vmSize), '-'),
+        computerName = coalesce(tostring(properties.extended.instanceView.computerName), tostring(properties.osProfile.computerName), '-'),
+        hyperVGeneration = coalesce(tostring(properties.extended.instanceView.hyperVGeneration), '-'),
+        securityType = case(
+            isnull(properties.securityProfile.securityType) or (properties.securityProfile.securityType =~ "Standard"), 'Standard',
+            properties.securityProfile.securityType =~ "TrustedLaunch", 'Trusted launch',
+            properties.securityProfile.securityType =~ "ConfidentialVm", 'Confidential',
+            '-'
+        ),
+        nicId = tostring(tolower(nic.id)),
+        powerState = coalesce(properties.powerState, properties.status.powerState, tostring(split(tolower(properties.extended.instanceView.powerState.code), "powerstate/")[1])),
+        provisioningState = tostring(properties.provisioningState),
+        hibernationState = tostring(split(tolower(properties.extended.instanceView.hibernationState.code), "hibernationstate/")[1]),
+		scaleSet = coalesce(extract('/virtualMachineScaleSets/(.*)', 1, tostring(properties.virtualMachineScaleSet.id)), '-'),
+        imageId = tolower(coalesce(extract('(.*)/versions/', 1, tostring(properties.storageProfile.imageReference.id)), tostring(properties.storageProfile.imageReference.id))),
+        assessmentMode,
+        periodicAssessment
+| join kind=leftouter hint.strategy=shuffle (data 
+            | where type =~ 'microsoft.compute/galleries/images'
+            | project
+                imageId = tolower(id),
+                imageDefinitionPublisher = properties.identifier.publisher,
+                imageDefinitionOffer = properties.identifier.offer,
+                imageDefinitionSku = properties.identifier.sku
+    )
+    on imageId
+| extend
+        publisher = coalesce(
+            tostring(imageDefinitionPublisher),
+            publisher
+        ),
+        offer = coalesce(
+            tostring(imageDefinitionOffer),
+            offer
+        ),
+        sku = coalesce(
+            tostring(imageDefinitionSku),
+            sku
+        )
+| join kind=leftouter hint.strategy=shuffle (data
+            | where type =~ 'Microsoft.Network/networkInterfaces' 
+            | extend ipConfigsCount=array_length(properties.ipConfigurations) 
+            | mvexpand ipconfig=properties.ipConfigurations limit 400
+            | where ipConfigsCount == 1 or ipconfig.properties.primary =~ 'true' 
+            | parse kind=regex tostring(ipconfig.properties.subnet.id) with '/virtualNetworks/' virtualNetwork '/subnets/' subnet 
+            | project
+                nicId=tolower(id),
+                publicIpId=tostring(ipconfig.properties.publicIPAddress.id),
+                privateIPAddress=tostring(ipconfig.properties.privateIPAddress),
+                subnet,
+                virtualNetwork,
+                lbReferences=array_concat(
+                    ipconfig.properties.loadBalancerInboundNatRules,
+                    ipconfig.properties.loadBalancerBackendAddressPools)
+        )
+        on nicId
+| project-away nicId, nicId1
+| mvexpand lbRef=lbReferences limit 400
+| extend backendId=tolower(tostring(lbRef.id))
+| summarize tags = any(tags), 
+                name = any(name), 
+                resourceGroup = any(resourceGroup),
+                type = any(type),
+                ['kind'] = any(['kind']),
+                location = any(location),
+                timeCreated = any(timeCreated),
+                timeCreatedForSort = any(timeCreatedForSort),
+                subscriptionId = any(subscriptionId),
+                licenseType = any(licenseType),
+                nics = any(nics), 
+                zones = any(zones),
+                os = any(os),
+                usesManagedDisks = any(usesManagedDisks), 
+                publicIpId = any(publicIpId), 
+                disks = any(disks), 
+                source = any(source),
+                spotEvictionPolicy = any(spotEvictionPolicy),
+                azureSpot = any(azureSpot),
+                spotEvictionType = any(spotEvictionType),
+                spotPrice = any(spotPrice),
+                proximityPlacementGroup = any(proximityPlacementGroup), 
+                host = any(host),
+                availabilitySet = any(availabilitySet), 
+                vmSize = any(vmSize),
+                securityType = any(securityType), 
+                privateIPAddress = any(privateIPAddress), 
+                subnet = any(subnet), 
+                virtualNetwork = any(virtualNetwork), 
+                powerState = any(powerState), 
+                provisioningState = any(provisioningState),
+                hibernationState = any(hibernationState),
+                scaleSet = any(scaleSet),
+                edgeZone = any(edgeZone),
+                computerName = any(computerName),
+                hyperVGeneration = any(hyperVGeneration), 
+                publisher = any(publisher),
+                offer = any(offer), 
+                sku = any(sku), 
+                backendId = any(backendId),
+                assessmentMode = any(assessmentMode),
+                periodicAssessment = any(periodicAssessment)
+                by id
+| join kind=leftouter hint.strategy=shuffle (data 
+            | where type =~ 'microsoft.network/loadbalancers'
+            | mvexpand fipc=properties.frontendIPConfigurations limit 400
+            | mvexpand lbRule=properties.loadBalancingRules limit 400
+            | mvexpand bep=lbRule.properties.backendAddressPools limit 400
+            | extend feipId = lbRule.properties.frontendIPConfiguration.id
+            | where tolower(tostring(fipc.id)) =~ tolower(tostring(feipId))
+            | project lbPublicIpId = tostring(fipc.properties.publicIPAddress.id), backendId=tolower(tostring(bep.id))
+        )
+        on backendId
+| summarize lbPublicIpId=any(lbPublicIpId), 
+                tags = any(tags),
+                name = any(name),
+                resourceGroup = any(resourceGroup),
+                type = any(type),
+                ['kind'] = any(['kind']),
+                location = any(location),
+                timeCreated = any(timeCreated),
+                timeCreatedForSort = any(timeCreatedForSort),
+                subscriptionId = any(subscriptionId),
+                licenseType = any(licenseType),
+                nics = any(nics),
+                zones = any(zones),
+                os = any(os),
+                usesManagedDisks = any(usesManagedDisks),
+                publicIpId = any(publicIpId),
+                disks = any(disks),
+                source = any(source),
+                spotEvictionPolicy = any(spotEvictionPolicy),
+                azureSpot = any(azureSpot),
+                spotEvictionType = any(spotEvictionType),
+                spotPrice = any(spotPrice), 
+                proximityPlacementGroup = any(proximityPlacementGroup),
+                host = any(host), 
+                availabilitySet = any(availabilitySet),
+                vmSize = any(vmSize),
+                securityType = any(securityType),
+                privateIPAddress = any(privateIPAddress),
+                subnet = any(subnet),
+                virtualNetwork = any(virtualNetwork),
+                powerState = any(powerState), 
+                provisioningState = any(provisioningState),
+                hibernationState = any(hibernationState),
+                scaleSet = any(scaleSet),
+                edgeZone = any(edgeZone),
+                computerName = any(computerName),
+                hyperVGeneration = any(hyperVGeneration),
+                publisher = any(publisher), 
+                offer = any(offer),
+                sku = any(sku),
+                assessmentMode = any(assessmentMode),
+                periodicAssessment = any(periodicAssessment)
+            by id
+| extend publicIpId=tolower(iff(isnotempty(publicIpId), publicIpId, lbPublicIpId))
+| project-away lbPublicIpId
+| join kind=leftouter hint.strategy=shuffle (data 
+            | where type =~ 'microsoft.network/publicipaddresses' 
+            | project publicIpId=tolower(id), publicIpAddress=tostring(properties.ipAddress), publicDnsName=tostring(properties.dnsSettings.fqdn))
+        on publicIpId
+| project-away publicIpId, publicIpId1
+| extend machineId = tolower(tostring(id))
+| extend updateStatusBladeLinkText = iff(isnull(periodicAssessment) or periodicAssessment == false,
+        'Enable periodic assessment', 'View status')
+| extend updateStatusBladeLinkBlade = iff(isnull(periodicAssessment) or periodicAssessment == false,
+        pack("blade", "UpdateCenterUpdateSettingsBlade", "extension", "Microsoft_Azure_Automation"),
+        pack("blade", "UpdateMgmtV2MenuBlade", "extension", "Microsoft_Azure_Automation")
+        )
+| extend updateStatusBladeLinkParameters = iff(isnull(periodicAssessment) or periodicAssessment == false,
+        pack("ids", pack_array(machineId), "source", "VirtualMachines_BrowseResourceBlade"),
+        pack("machineResourceId", id, "source", "VirtualMachines_BrowseResourceBlade")
+        )
+| extend updateStatus = pack(
+        "text", updateStatusBladeLinkText,
+        "blade", updateStatusBladeLinkBlade.blade,
+        "extension", updateStatusBladeLinkBlade.extension,
+        "parameters", updateStatusBladeLinkParameters)
+| project id,
+        name,
+        resourceGroup,
+        type,
+        kind,
+        location,
+        timeCreated,
+        timeCreatedForSort = tostring(timeCreatedForSort),
+        subscriptionId,
+        tags,
+        nics,
+        os,
+        publisher,
+        offer,
+        sku,
+        status = case(
+            provisioningState =~ 'CREATING', 'Creating',
+            provisioningState =~ 'DELETING', 'Deleting',
+            (provisioningState =~ 'FAILED' and isnotnull(powerState) and isnotempty(powerState)), case(
+                powerState =~ 'RUNNING', 'Running',
+                powerState =~ 'POWEREDON', 'Running',
+                powerState =~ 'STOPPED', 'Stopped',
+                powerState =~ 'DEALLOCATED', case(
+                    hibernationState =~ 'HIBERNATED', 'Hibernated (deallocated)',
+                    'Stopped (deallocated)'
+                ),
+                powerState =~ 'POWEREDOFF', 'Powered off',
+                powerState =~ 'SUSPENDED', 'Suspended',
+                'Unknown'
+            ),
+            provisioningState =~ 'FAILED', 'Failed',
+            (provisioningState =~ 'SUCCEEDED' and isnotnull(powerState) and isnotempty(powerState)), case(
+                powerState =~ 'RUNNING', 'Running',
+                powerState =~ 'POWEREDON', 'Running',
+                powerState =~ 'STOPPED', 'Stopped',
+                powerState =~ 'DEALLOCATED', case(
+                    hibernationState =~ 'HIBERNATED', 'Hibernated (deallocated)',
+                    'Stopped (deallocated)'
+                ),
+                powerState =~ 'POWEREDOFF', 'Powered off',
+                powerState =~ 'SUSPENDED', 'Suspended',
+                powerState =~ 'STARTING', 'Starting',
+                'Unknown'
+            ),
+            (provisioningState =~ 'UPDATING' and isnotnull(powerState) and isnotempty(powerState)), case(
+                powerState =~ 'DEALLOCATING', 'Deallocating',
+                powerState =~ 'RUNNING', 'Running',
+                powerState =~ 'STARTING', 'Starting',
+                powerState =~ 'STOPPING', 'Stopping',
+                'Updating'
+            ),
+            'Unknown'
+        ),
+        disks,
+        availabilitySet,
+        vmSize,
+        securityType,
+        virtualNetwork = coalesce(virtualNetwork, '-'),
+        subnet = coalesce(subnet, '-'),
+        privateIPAddress = coalesce(privateIPAddress, '-'),
+        publicDnsName = coalesce(publicDnsName, '-'),
+        publicIpAddress = coalesce(publicIpAddress, '-'),
+        zones,
+        usesManagedDisks,
+        licenseType,
+        source,
+        spotEvictionPolicy,
+        spotEvictionType,
+        spotPrice,
+        azureSpot,
+        proximityPlacementGroup,
+        host,
+		scaleSet = coalesce(scaleSet, '-'),
+		edgeZone = coalesce(edgeZone, '-'),
+        computerName,
+        hyperVGeneration,
+        updateStatus
+| extend subscriptionDisplayName=case(subscriptionId =~ '7d60dde1-7547-4e12-b5a2-6332016880bb','ACS-GOV-INTERNAL',subscriptionId =~ 'ca58df44-ef7e-4dc1-ad44-7ffad036cc3d','ADE-GOV-INTERNAL',subscriptionId =~ '241bf85b-51d9-45de-ae54-480774137c45','AES-GOV-INTERNAL',subscriptionId =~ '8601eb2d-619d-44ce-8ec0-109b64a5b1e9','ALC-GOV-INTERNAL',subscriptionId =~ '26b60dfe-5e8a-47ef-a88f-8e4c20f59a25','AWM-GOV-INTERNAL',subscriptionId =~ '4e77e218-f7e1-49ea-8ddd-b2909ab9a320','AZG-GOV-INTERNAL',subscriptionId =~ '84f38fed-6103-4723-adbb-f8d9fb07e02c','BHL-GOV-INTERNAL',subscriptionId =~ '2644256e-7c9b-402c-861c-1be90500c79a','BIO-GOV-INTERNAL',subscriptionId =~ 'f3de17bc-7be9-449a-88f5-560711f2a221','BISL-GOV-EXTERNAL',subscriptionId =~ 'b0a67ed8-14ea-4e68-83f6-8a7d32ea06d1','BMS-GOV-INTERNAL',subscriptionId =~ '06386aef-f5eb-457c-aed7-8595cd20c9d5','CAT-GOV-INTERNAL',subscriptionId =~ '1ad65edc-e626-4cfe-a7c4-c48fd9a7b96b','CCE-GOV-INTERNAL',subscriptionId =~ '97107ad7-bc7f-4696-a5c2-fd242faef941','CDW-GOV-INTERNAL',subscriptionId =~ '3f66c420-ce7c-40d7-a342-b8228e1d5995','CNG-GOV-INTERNAL',subscriptionId =~ '38337a8a-c4a1-4078-9619-b228cbb2b5e2','COF-GOV-INTERNAL',subscriptionId =~ '5bdbd82b-2767-416d-afde-4469f3991f09','CORE-GOV-INTERNAL',subscriptionId =~ '29cd4a34-d106-4fff-9dfe-97367f6271f7','CRD-GOV-INTERNAL',subscriptionId =~ '92eee758-4d99-4bf2-815e-f2ea386a2da0','CV1-GOV-INTERNAL',subscriptionId =~ '0a0b49a6-b9ef-4d8b-a472-3868a084ddd7','CYA-GOV-INTERNAL',subscriptionId =~ '2b7c0a6e-9e39-4ae9-aad2-4278c56c99b8','CYR-GOV-INTERNAL',subscriptionId =~ '39e9fa46-7b81-4347-896a-ea929d9f4b99','DAS-GOV-INTERNAL',subscriptionId =~ 'd9859f5e-0ae3-44c6-925f-cc0e33eb597c','DCA-GOV-INTERNAL',subscriptionId =~ '9b10494e-8f4f-4fcc-96d3-1d0d7f1cca3e','DEVTEST-GOV-EXTERNAL',subscriptionId =~ '96f889ee-3654-4f61-b369-5f93574edc37','DEVTEST-GOV-INTERNAL',subscriptionId =~ 'c6a5e167-421e-4807-bc72-7f6c6c05b098','DMM-GOV-INTERNAL',subscriptionId =~ '830171a3-aef0-4ddd-b625-1f543e515a5a','DSR-GOV-INTERNAL',subscriptionId =~ 'f930f319-c87b-43bd-a811-cfffd2f3f754','EDL-GOV-INTERNAL',subscriptionId =~ 'b4a05b02-d86d-4bc2-a0e1-fc30a1dd3213','EEI-GOV-INTERNAL',subscriptionId =~ '2feaa49a-ce8d-4ead-8d91-64a5896e7e51','EEO-GOV-INTERNAL',subscriptionId =~ '85f2a621-08fb-43d5-b9c5-7538cd71efe8','EGY-GOV-INTERNAL',subscriptionId =~ 'c0eb1fa5-dd86-490c-bd98-217a85aaa1c9','EIS-GOV-INTERNAL',subscriptionId =~ '92edc17b-7dc0-4a04-b568-3966499d0aa0','EMD-GOV-INTERNAL',subscriptionId =~ '0773e98d-a2e1-4dcd-a403-0f24368a7963','EMS-GOV-INTERNAL',subscriptionId =~ '63e5e258-bb5a-48cd-a921-7da4f8dcb0d6','FBC-GOV-INTERNAL',subscriptionId =~ '393df49f-2ced-4e30-9280-d30fc065dba7','FIR-GOV-INTERNAL',subscriptionId =~ '873f84c1-5e2d-43f8-b430-554798bcc009','FMBT-DEVTEST-GOV-INTERNAL',subscriptionId =~ '435b2cd9-4559-4788-a0d0-5a809fc3c9e9','FMBT-PREPROD-GOV-INTERNAL',subscriptionId =~ '1e5b8da5-fbcf-4f83-b932-ed8af1530065','FMBT-PROD-GOV-INTERNAL',subscriptionId =~ 'fffd9466-ea62-4d2a-b733-0db5f3e108d3','FSC-GOV-INTERNAL',subscriptionId =~ 'cc6c5b61-1b6e-4f16-af5f-354cbaadc37d','GGG-GOV-INTERNAL',subscriptionId =~ '5516834b-98a6-41a3-8863-6bbf251bbada','GIS-GOV-INTERNAL',subscriptionId =~ '75c92d0a-0873-4c1a-9952-86b69f1ecc19','GIT-GOV-INTERNAL',subscriptionId =~ '09c65723-b3fc-4a6c-8762-c8afc3ecf395','HCM-GOV-INTERNAL',subscriptionId =~ 'ca106dde-3f35-48dc-bd8c-fc626a5d629a','HDR-GOV-INTERNAL',subscriptionId =~ '18d4f31d-a95d-49ac-ba50-e7f2ffca7bd6','IAM-GOV-INTERNAL',subscriptionId =~ '744bb2dd-cd71-4f7f-a2ac-8e3ac71b0214','ICM-GOV-INTERNAL',subscriptionId =~ '0f6794a4-9449-4681-bcba-8d35d2f45389','ICW-GOV-INTERNAL',subscriptionId =~ '7199e4dc-6201-466a-890c-b1ec05435ae6','KSS-GOV-INTERNAL',subscriptionId =~ 'ddd1588d-115f-40a2-ac38-c5e9c0467512','KYF-GOV-INTERNAL',subscriptionId =~ '4aa1275a-5b14-4267-8d89-9ee1460fff02','LCS-GOV-INTERNAL',subscriptionId =~ 'b5a9b031-8639-4e63-af09-68ec05b5c6af','LOG-GOV-INTERNAL',subscriptionId =~ '33f3901e-c6d4-4974-b01d-ff76cdc20f24','MHA-GOV-INTERNAL',subscriptionId =~ '4c885c47-0e78-40c8-b0f1-d11b0c5cbefc','MRE-GOV-INTERNAL',subscriptionId =~ '2e4dde24-7244-4377-adda-507c7425bc1f','MRE2117-GOV-INTERNAL',subscriptionId =~ '725be669-97cb-46fa-8e0a-d08191ae3394','MRE2118-GOV-INTERNAL',subscriptionId =~ '967fdb7b-a7a7-4ebc-87f2-0812601bc725','MSP-GOV-INTERNAL',subscriptionId =~ 'ad9f51d5-55d1-47f3-a611-885d1bb6d145','MTS-GOV-INTERNAL',subscriptionId =~ 'dc443f48-6405-4838-a8d5-c75aeee71962','NCR-GOV-INTERNAL',subscriptionId =~ '2ac52c70-f5ff-4a9e-88be-6f90368f4078','NPI-GOV-INTERNAL',subscriptionId =~ '7819ca55-f24b-4a0c-86cd-6624580205ac','NTP-GOV-INTERNAL',subscriptionId =~ 'e2dcbb93-d73c-4c07-b48b-55dbe96b97b8','OIG-GOV-INTERNAL',subscriptionId =~ 'db62ff3b-caac-44fa-aa3d-9d8a91f5bf8f','OPD-GOV-INTERNAL',subscriptionId =~ 'd73313f1-5b3e-431a-951a-0df0a31c4e07','OTG-GOV-INTERNAL',subscriptionId =~ 'f6b3c3c6-f0aa-4517-9ba4-f83d1e8a7987','PBM-GOV-INTERNAL',subscriptionId =~ 'd55a9f77-3ca0-4eee-8ab0-035f23bffb37','PCI-GOV-INTERNAL',subscriptionId =~ '0b04b0c1-79aa-40e9-a0cd-6e5fd91c8bd6','PDB-GOV-INTERNAL',subscriptionId =~ 'e814428f-6ef7-41d1-b863-a04ebeb86883','PIO-GOV-INTERNAL',subscriptionId =~ '414a068e-dd46-48a0-9549-005b63f834a3','PKI-GOV-INTERNAL',subscriptionId =~ '3f9644d2-1c3a-498e-9f1c-4f052652edc9','PMT-GOV-INTERNAL',subscriptionId =~ 'c0f60a26-69fd-4156-8148-58b5eee5b33d','PREPROD-GOV-EXTERNAL',subscriptionId =~ '3b091b7b-37d8-4f17-aa4d-6fddfc5dd7c5','PREPROD-GOV-INTERNAL',subscriptionId =~ '4faffdef-51b0-4134-9420-64673991d29f','PROD-GOV-EXTERNAL',subscriptionId =~ '7c2f587d-7a26-449f-a3de-7e2890bf3613','PROD-GOV-INTERNAL',subscriptionId =~ '2d753a0d-52ff-4e37-adbc-8f1a4d795abc','PSI-GOV-INTERNAL',subscriptionId =~ '18afb034-2cc5-4fd7-8624-06055a663b59','PTL-GOV-INTERNAL',subscriptionId =~ 'a1ddcc47-c32b-4e5e-b4e7-b437e0ebaf68','QAL-GOV-INTERNAL',subscriptionId =~ '9f1ebd82-f35b-4147-900b-05d29fa7d606','QUANTICO-GOV-INTERNAL',subscriptionId =~ '578b5649-fe0c-45f4-99c5-694f62d2cf71','REG-GOV-INTERNAL',subscriptionId =~ '4bea52b8-f49d-479b-bf59-096b801422cb','RPP-GOV-INTERNAL',subscriptionId =~ '4fbf16c7-0277-40e0-8d46-fd938280645d','SCC-GOV-EXTERNAL',subscriptionId =~ '00dba769-e94d-4697-937a-ebd57800d4be','SCC-GOV-INTERNAL',subscriptionId =~ '759339a9-b7dd-43e3-867a-66b0b28ad0da','SCL-GOV-INTERNAL',subscriptionId =~ '8cac1c7e-c036-485d-9d75-3415af124681','SDP-GOV-INTERNAL',subscriptionId =~ '4b282194-0dd7-4522-8e07-2657cc1cb7d3','SECURITY-GOV-EXTERNAL',subscriptionId =~ 'a682391d-f87e-4d37-83ff-91e1620f3c8a','SECURITY-GOV-INTERNAL',subscriptionId =~ 'bfaf1675-50a0-458b-848b-4b1c4b4349a3','SER-GOV-INTERNAL',subscriptionId =~ '3c35076d-5c20-48dc-99b3-57888f28a9bb','SNO-GOV-INTERNAL',subscriptionId =~ '9b17bc38-62c3-4aa9-b41b-b3d221eeba91','SPD-GOV-INTERNAL',subscriptionId =~ '21f76cff-42cc-481e-a1e6-badaeca34669','SVN-GOV-INTERNAL',subscriptionId =~ '7300632d-6aa5-406b-bef0-0130a1ebb7d0','TAS-GOV-INTERNAL',subscriptionId =~ '8c349a6e-00fe-4651-9d9f-ff86aeaf6f69','TRM-GOV-INTERNAL',subscriptionId =~ '52952415-5928-4a04-a3a4-6f5e7cb00178','TSF-GOV-INTERNAL',subscriptionId =~ 'c9c92f65-de4a-42b7-aff3-f9bbb02f7028','TWK-GOV-INTERNAL',subscriptionId =~ '72a52e88-aaf3-42f3-996b-7ff1ce0f3f9f','TWK-GOV-INTERNAL-2',subscriptionId =~ 'f631b2ec-e304-491c-babf-057a7dd40d27','TWK-GOV-INTERNAL-3',subscriptionId =~ 'c2011364-f80b-479d-8ece-25679d0cb617','UCI-GOV-INTERNAL',subscriptionId =~ '9452c0a9-f4b9-429b-a1c1-443375a2235b','VBE-GOV-INTERNAL',subscriptionId =~ '12efbd4b-b564-4e99-b80c-aeae5e32288c','VDL-GOV-INTERNAL',subscriptionId =~ 'ab15990d-f953-454b-afb4-8b69498d9fc1','VDW-GOV-INTERNAL',subscriptionId =~ '25828990-115c-4008-b846-beaf18217947','VEM-GOV-INTERNAL',subscriptionId =~ 'ed7f181a-9f97-4d0b-922f-577e695368b6','VIM-GOV-INTERNAL',subscriptionId =~ '6db1952e-6a26-4b97-9f76-79b3e36faca4','VPR-GOV-INTERNAL',subscriptionId =~ 'a8d4209e-d535-4c3c-8b41-9e0af1d9f238','VPT-GOV-INTERNAL',subscriptionId =~ '984179cb-6653-4047-b10a-e4ac1367d179','VSE-GOV-INTERNAL',subscriptionId =~ '7fb1a047-9682-4e5e-817b-ebe0164a42ec','WEB-GOV-INTERNAL',subscriptionId =~ '2d5017c6-874c-495f-b2d8-eef39ae25487','BCP-GOV-INTERNAL',subscriptionId =~ 'ed8301a8-e80f-40ca-bc34-f975f8b60ce1','VPC-GOV-INTERNAL',subscriptionId)
+| extend locationDisplayName=case(location =~ 'usgovvirginia','USGov Virginia',location =~ 'global','Global',location =~ 'usdod','USDoD',location =~ 'usgov','USGov',location =~ 'usgovarizona','USGov Arizona',location =~ 'usdodcentral','USDoD Central',location =~ 'usdodeast','USDoD East',location =~ 'usgovtexas','USGov Texas',location)
+| where (type !~ ('microsoft.azureactivedirectory/ciamdirectories'))
+| where (type !~ ('microsoft.arc/allfairfax'))
+| where (type !~ ('microsoft.arc/all'))
+| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))
+| where (type !~ ('microsoft.cdn/profiles/secrets'))
+| where (type !~ ('microsoft.cdn/profiles/rulesets'))
+| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))
+| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))
+| where (type !~ ('microsoft.cdn/profiles/origingroups'))
+| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))
+| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))
+| where (type !~ ('microsoft.cdn/profiles/customdomains'))
+| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))
+| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))
+| where (type !~ ('microsoft.compute/standbypoolinstance'))
+| where (type !~ ('microsoft.compute/computefleetscalesets'))
+| where (type !~ ('microsoft.compute/computefleetinstances'))
+| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))
+| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))
+| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))
+| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))
+| where (type !~ ('microsoft.containerservice/managedclusters/namespaces'))
+| where not((type =~ ('microsoft.containerservice/managedclusters')) and ((kind =~ ('automatic'))))
+| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))
+| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))
+| where (type !~ ('microsoft.portalservices/extensions/deployments'))
+| where (type !~ ('microsoft.portalservices/extensions'))
+| where (type !~ ('microsoft.portalservices/extensions/slots'))
+| where (type !~ ('microsoft.portalservices/extensions/versions'))
+| where (type !~ ('microsoft.databricks/accessconnectors'))
+| where (type !~ ('microsoft.compute/locations/communitygalleries/images'))
+| where (type !~ ('microsoft.documentdb/mongoclusters'))
+| where (type !~ ('microsoft.dbforpostgresql/servergroupsv2'))
+| where (type !~ ('microsoft.documentdb/fleets'))
+| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))
+| where (type !~ ('microsoft.eventgrid/namespaces'))
+| where (type !~ ('microsoft.connectedvmwarevsphere/vcenters'))
+| where (type !~ ('microsoft.hybridcompute/machinessoftwareassurance'))
+| where (type !~ ('microsoft.hybridcompute/machinespaygo'))
+| where (type !~ ('microsoft.hybridcompute/machinesesu'))
+| where (type !~ ('microsoft.hybridcompute/gateways'))
+| where (type !~ ('microsoft.scvmm/vmmservers'))
+| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))
+| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/extensions'))
+| where (type !~ ('microsoft.azurearcdata/datacontrollers'))
+| where (type !~ ('microsoft.azurearcdata/postgresinstances'))
+| where (type !~ ('microsoft.azurearcdata/sqlmanagedinstances'))
+| where (type !~ ('microsoft.azurearcdata/sqlserveresulicenses'))
+| where (type !~ ('microsoft.azurearcdata/sqlserverinstances'))
+| where (type !~ ('microsoft.azurearcdata/sqlserverinstances/databases'))
+| where (type !~ ('microsoft.azurearcdata/sqlserverlicenses'))
+| where (type !~ ('microsoft.network/networkvirtualappliances'))
+| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))
+| where (type !~ ('microsoft.networkfunction/azuretrafficcollectors'))
+| where (type !~ ('microsoft.network/networkmanagers'))
+| where (type !~ ('microsoft.insights/diagnosticsettings'))
+| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))
+| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))
+| where (type !~ ('microsoft.scom/managedinstances'))
+| where (type !~ ('microsoft.orbital/l2connections'))
+| where (type !~ ('microsoft.orbital/groundstations'))
+| where (type !~ ('microsoft.orbital/geocatalogs'))
+| where (type !~ ('microsoft.orbital/edgesites'))
+| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))
+| where (type !~ ('microsoft.recoveryservicesintd/vaults'))
+| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))
+| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))
+| where (type !~ ('microsoft.billingbenefits/credits'))
+| where (type !~ ('microsoft.billingbenefits/discounts'))
+| where (type !~ ('microsoft.billingbenefits/maccs'))
+| where (type !~ ('microsoft.relationships/servicegrouprelationships'))
+| where (type !~ ('microsoft.resources/virtualsubscriptionsforresourcepicker'))
+| where (type !~ ('microsoft.resources/deletedresources'))
+| where (type !~ ('microsoft.deploymentmanager/rollouts'))
+| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))
+| where (type !~ ('microsoft.storagecache/caches'))
+| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))
+| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))
+| where (type !~ ('microsoft.mission/virtualenclaves'))
+| where (type !~ ('microsoft.mission/communities/transithubs'))
+| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))
+| where (type !~ ('microsoft.mission/enclaveconnections'))
+| where (type !~ ('microsoft.mission/communities'))
+| where (type !~ ('microsoft.mission/catalogs'))
+| where (type !~ ('microsoft.mission/approvals'))
+| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))
+| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))
+| where ((type =~ ('microsoft.compute/virtualmachines'))) or ((type =~ ('microsoft.hybridcompute/machines')) and ((kind =~ ('AVS'))))
+| project name,subscriptionDisplayName,resourceGroup,locationDisplayName,status,os,vmSize,publicIpAddress,disks,updateStatus,id,type,kind,location,subscriptionId,tags
+| sort by (tolower(tostring(name))) asc

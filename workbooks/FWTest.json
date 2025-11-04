@@ -1,0 +1,156 @@
+{
+    "id": "/subscriptions/7d60dde1-7547-4e12-b5a2-6332016880bb/resourceGroups/ACS-PROD-INT-SOUTHWEST-NETWORK-RG/providers/Microsoft.Network/azureFirewalls/ADM-ACS-PROD-SOUTHWEST-AF01/providers/microsoft.insights/diagnosticSettings/Firewall Diagnostics",
+    "name": "Firewall Diagnostics",
+    "properties": {
+        "logs": [
+            {
+                "category": "AzureFirewallApplicationRule",
+                "categoryGroup": null,
+                "enabled": true,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AzureFirewallNetworkRule",
+                "categoryGroup": null,
+                "enabled": true,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AzureFirewallDnsProxy",
+                "categoryGroup": null,
+                "enabled": true,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWNetworkRule",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWApplicationRule",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWNatRule",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWThreatIntel",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWIdpsSignature",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWDnsQuery",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWFqdnResolveFailure",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWFatFlow",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWFlowTrace",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWApplicationRuleAggregation",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWNetworkRuleAggregation",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            },
+            {
+                "category": "AZFWNatRuleAggregation",
+                "categoryGroup": null,
+                "enabled": false,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                }
+            }
+        ],
+        "metrics": [
+            {
+                "timeGrain": null,
+                "enabled": true,
+                "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                },
+                "category": "AllMetrics"
+            }
+        ],
+        "workspaceId": "/subscriptions/7d60dde1-7547-4e12-b5a2-6332016880bb/resourcegroups/acs-prod-int-east-svcs-rg/providers/microsoft.operationalinsights/workspaces/acs-prod-east-log-analytics",
+        "logAnalyticsDestinationType": "AzureDiagnostics"
+    }
+}

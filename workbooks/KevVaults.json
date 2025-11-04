@@ -1,0 +1,30 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "Resources\r\n| where type =~ 'Microsoft.KeyVault/vaults'\r\n| project name, resourceGroup, location, id, type, subscriptionId, tags, properties\r\n| extend typeDisplayName = case(type =~ 'microsoft.keyvault/vaults', 'Key vault', type)\r\n| extend locationDisplayName = case(\r\n    location =~ 'usgovvirginia', 'USGov Virginia',\r\n    location =~ 'global', 'Global',\r\n    location =~ 'usdod', 'USDoD',\r\n    location =~ 'usgov', 'USGov',\r\n    location =~ 'usgovarizona', 'USGov Arizona',\r\n    location =~ 'usdodcentral', 'USDoD Central',\r\n    location =~ 'usdodeast', 'USDoD East',\r\n    location =~ 'usgovtexas', 'USGov Texas',\r\n    location\r\n)\r\n| extend va_emass_id = tostring(tags['va_emass_id'])\r\n| extend keyVaultUrl = strcat('https://', name, '.vault.azure.net')\r\n| project name, resourceGroup, typeDisplayName, va_emass_id, subscriptionId, tags, keyVaultUrl\r\n| order by tostring(name) asc",
+          "size": 1,
+          "title": "Key Vaults",
+          "showExportToExcel": true,
+          "exportToExcelOptions": "all",
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "gridSettings": {
+            "rowLimit": 350
+          }
+        },
+        "showPin": true,
+        "name": "query - 0"
+      }
+    ],
+    "fallbackResourceIds": [
+      "Azure Monitor"
+    ],
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+  }

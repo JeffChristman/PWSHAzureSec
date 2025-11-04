@@ -1,0 +1,2114 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+      {
+        "type": 1,
+        "content": {
+          "json": "# Virtual Machine Analytics"
+        },
+        "name": "text - 0"
+      },
+      {
+        "type": 9,
+        "content": {
+          "version": "KqlParameterItem/1.0",
+          "crossComponentResources": [
+            "{Subscriptions}"
+          ],
+          "parameters": [
+            {
+              "id": "0d13757a-59d3-4fdc-ae21-1de067448751",
+              "version": "KqlParameterItem/1.0",
+              "name": "TimeRange",
+              "label": "Time Range",
+              "type": 4,
+              "isRequired": true,
+              "value": {
+                "durationMs": 604800000
+              },
+              "typeSettings": {
+                "selectableValues": [
+                  {
+                    "durationMs": 3600000
+                  },
+                  {
+                    "durationMs": 14400000
+                  },
+                  {
+                    "durationMs": 43200000
+                  },
+                  {
+                    "durationMs": 86400000
+                  },
+                  {
+                    "durationMs": 259200000
+                  },
+                  {
+                    "durationMs": 604800000
+                  },
+                  {
+                    "durationMs": 2592000000
+                  },
+                  {
+                    "durationMs": 7776000000
+                  }
+                ],
+                "allowCustom": true
+              }
+            },
+            {
+              "id": "014e1db1-fa0f-49ab-b314-fc2324d92d4a",
+              "version": "KqlParameterItem/1.0",
+              "name": "Subscriptions",
+              "type": 6,
+              "isRequired": true,
+              "multiSelect": true,
+              "quote": "'",
+              "delimiter": ",",
+              "query": "Resources\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| summarize by subscriptionId\r\n| union (Resources\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| summarize Count = count() by subscriptionId\r\n| top 1 by Count desc)\r\n| summarize Count = count() by subscriptionId\r\n| project value = subscriptionId, label = subscriptionId, selected = Count > 1",
+              "crossComponentResources": [
+                "value::selected"
+              ],
+              "typeSettings": {
+                "additionalResourceOptions": [
+                  "value::all"
+                ],
+                "showDefault": false
+              },
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "value": [
+                "/subscriptions/1e5b8da5-fbcf-4f83-b932-ed8af1530065"
+              ]
+            },
+            {
+              "id": "07645637-100f-41e8-b844-3a390dce5b66",
+              "version": "KqlParameterItem/1.0",
+              "name": "LogAnalytics",
+              "type": 5,
+              "isRequired": true,
+              "multiSelect": true,
+              "quote": "'",
+              "delimiter": ",",
+              "query": "where type == \"microsoft.operationalinsights/workspaces\"",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "value": [
+                "/subscriptions/1e5b8da5-fbcf-4f83-b932-ed8af1530065/resourceGroups/fmbt-fmbtprod-int-south-reporting-rg/providers/Microsoft.OperationalInsights/workspaces/fmbt-prod-int-east-DEoms"
+              ],
+              "typeSettings": {
+                "additionalResourceOptions": [
+                  "value::all"
+                ],
+                "showDefault": false
+              },
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources"
+            },
+            {
+              "id": "761b30d8-1dd3-43f8-ac4b-075c2a0cbfa7",
+              "version": "KqlParameterItem/1.0",
+              "name": "ResourceGroups",
+              "type": 2,
+              "isRequired": true,
+              "multiSelect": true,
+              "quote": "'",
+              "delimiter": ",",
+              "query": "where type in~('microsoft.compute/virtualmachines')\r\n| summarize Count = count() by resourceGroup\r\n| order by Count desc\r\n| extend Rank = row_number()\r\n| project value = resourceGroup, label = resourceGroup, selected = Rank == 1",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "value": [
+                "fmbt-fmbtprod-int-south-reporting-rg",
+                "fmbt-fmbtprod-int-east-reportingdr-rg"
+              ],
+              "typeSettings": {
+                "additionalResourceOptions": [
+                  "value::all"
+                ],
+                "showDefault": false
+              },
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources"
+            },
+            {
+              "id": "85bc1eb3-c168-4054-a925-2bcc86074223",
+              "version": "KqlParameterItem/1.0",
+              "name": "VirtualMachines",
+              "label": "Virtual Machines",
+              "type": 5,
+              "isRequired": true,
+              "multiSelect": true,
+              "quote": "'",
+              "delimiter": ",",
+              "query": "resources\r\n| where type == \"microsoft.compute/virtualmachines\"\r\n| where resourceGroup in~ ({ResourceGroups})",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "value": [
+                "value::all"
+              ],
+              "typeSettings": {
+                "additionalResourceOptions": [
+                  "value::all"
+                ],
+                "showDefault": false
+              },
+              "timeContext": {
+                "durationMs": 0
+              },
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources"
+            }
+          ],
+          "style": "above",
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources"
+        },
+        "name": "parameters - 1"
+      },
+      {
+        "type": 11,
+        "content": {
+          "version": "LinkItem/1.0",
+          "style": "tabs",
+          "links": [
+            {
+              "id": "a6c6aacd-61d4-4286-b25b-554a216c6e79",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Overview",
+              "subTarget": "Overview",
+              "style": "link"
+            },
+            {
+              "id": "548fae61-3bf4-493e-9732-8a09e0d72daf",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Metrics",
+              "subTarget": "Metrics",
+              "style": "link"
+            },
+            {
+              "id": "21beca91-ea06-424c-a39d-5f5ac1cc557c",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Availability",
+              "subTarget": "Availability",
+              "style": "link"
+            },
+            {
+              "id": "4356c4b2-21bf-4a1c-a42f-6d1b0763d4c5",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Windows Logs",
+              "subTarget": "WindowsLogs",
+              "style": "link"
+            },
+            {
+              "id": "dcdfb8dd-b12f-43af-9ffe-f7dea31c8c0c",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Change Tracking",
+              "subTarget": "ChangeTracking",
+              "style": "link"
+            },
+            {
+              "id": "707320d7-bd9b-4c6b-89fd-51fcc8bf7f27",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Software Inventory",
+              "subTarget": "Inventory",
+              "style": "link"
+            },
+            {
+              "id": "ffcd0cc3-efee-4865-b4d4-0e1c9d7445e3",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Patching",
+              "subTarget": "Patching",
+              "style": "link"
+            },
+            {
+              "id": "fe915c82-b776-4476-9f0c-657ae8fa3584",
+              "cellValue": "selectedTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Extensions",
+              "subTarget": "Extensions",
+              "style": "link"
+            }
+          ]
+        },
+        "name": "links - 19"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbookb20d42b0-579e-422f-840d-d6f6b6828412",
+                "version": "MetricsItem/2.0",
+                "size": 1,
+                "chartType": 0,
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Percentage CPU",
+                    "aggregation": 4
+                  },
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Network In Total",
+                    "aggregation": 4
+                  },
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Disk Read Operations/Sec",
+                    "aggregation": 4
+                  },
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Disk Write Operations/Sec",
+                    "aggregation": 4
+                  }
+                ],
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "Subscription",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    },
+                    {
+                      "columnMatch": "Name",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": "Resource",
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "formatter": 5,
+                      "formatOptions": {},
+                      "numberFormat": {
+                        "unit": 1,
+                        "options": {
+                          "style": "decimal",
+                          "useGrouping": false
+                        }
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU Timeline",
+                      "formatter": 10,
+                      "formatOptions": {
+                        "min": 0,
+                        "max": 100,
+                        "palette": "green"
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Network In Total",
+                      "formatter": 5,
+                      "formatOptions": {},
+                      "numberFormat": {
+                        "unit": 2,
+                        "options": {
+                          "style": "decimal"
+                        }
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Network In Total Timeline",
+                      "formatter": 9,
+                      "formatOptions": {
+                        "palette": "purple"
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Disk Read Operations/Sec",
+                      "formatter": 5,
+                      "formatOptions": {},
+                      "numberFormat": {
+                        "unit": 31,
+                        "options": {
+                          "style": "decimal",
+                          "useGrouping": false
+                        }
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Disk Read Operations/Sec Timeline",
+                      "formatter": 21,
+                      "formatOptions": {
+                        "min": 0,
+                        "max": 10,
+                        "palette": "blue"
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Disk Write Operations/Sec",
+                      "formatter": 5,
+                      "formatOptions": {},
+                      "numberFormat": {
+                        "unit": 31,
+                        "options": {
+                          "style": "decimal"
+                        }
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Disk Write Operations/Sec Timeline",
+                      "formatter": 21,
+                      "formatOptions": {
+                        "min": 0,
+                        "max": 10,
+                        "palette": "blue"
+                      }
+                    }
+                  ],
+                  "rowLimit": 10000,
+                  "labelSettings": [
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "label": "Percentage CPU (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU Timeline",
+                      "label": "Percentage CPU Timeline"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Network In Total",
+                      "label": "Network In Total (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Network In Total Timeline",
+                      "label": "Network In Total Timeline"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Disk Read Operations/Sec",
+                      "label": "Disk Read Operations/Sec (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Disk Read Operations/Sec Timeline",
+                      "label": "Disk Read Operations/Sec Timeline"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Disk Write Operations/Sec",
+                      "label": "Disk Write Operations/Sec (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Disk Write Operations/Sec Timeline",
+                      "label": "Disk Write Operations/Sec Timeline"
+                    }
+                  ]
+                },
+                "showExportToExcel": true
+              },
+              "showPin": true,
+              "name": "metric - 5"
+            },
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbookdb19a8d8-91af-44ea-951d-5ffa133b2ebe",
+                "version": "MetricsItem/2.0",
+                "size": 4,
+                "chartType": 0,
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Percentage CPU",
+                    "aggregation": 4
+                  }
+                ],
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "formatter": 1,
+                      "numberFormat": {
+                        "unit": 1,
+                        "options": null
+                      }
+                    },
+                    {
+                      "columnMatch": "Subscription",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Name",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": "Resource"
+                      }
+                    }
+                  ],
+                  "rowLimit": 10000,
+                  "labelSettings": [
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "label": "Percentage CPU (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU Timeline",
+                      "label": "Percentage CPU Timeline"
+                    }
+                  ]
+                },
+                "sortBy": []
+              },
+              "conditionalVisibility": {
+                "parameterName": "1",
+                "comparison": "isEqualTo",
+                "value": "2"
+              },
+              "name": "CPU data"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"4e6b78ae-e9b4-4fd7-8162-3665f7d44b76\",\"mergeType\":\"table\",\"leftTable\":\"CPU data\"}],\"projectRename\":[{\"originalName\":\"[CPU data].Subscription\",\"mergedName\":\"Subscription\"},{\"originalName\":\"[CPU data].Name\",\"mergedName\":\"Name\"},{\"originalName\":\"[CPU data].microsoft.compute/virtualmachines--Percentage CPU\",\"mergedName\":\"Percentage CPU (Average)\",\"fromId\":\"unknown\"},{\"originalName\":\"[CPU data].microsoft.compute/virtualmachines--Percentage CPU Timeline\",\"mergedName\":\"Percentage CPU Timeline\",\"fromId\":\"unknown\"},{\"originalName\":\"[Added column]\",\"mergedName\":\"Text\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"condition\":\"Percentage CPU (Average) is empty  Result is -\",\"newColumnContext\":{\"leftColumn\":\"Percentage CPU (Average)\",\"operator\":\"is Empty\",\"rightValType\":\"column\",\"resultValType\":\"static\",\"resultVal\":\"-\"}},{\"condition\":\"Default\",\"newColumnContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"column\",\"resultVal\":\"Percentage CPU (Average)\"}}]},{\"originalName\":\"[Added column]\",\"mergedName\":\"Value\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"condition\":\"Percentage CPU (Average) is empty  Result is 0\",\"newColumnContext\":{\"leftColumn\":\"Percentage CPU (Average)\",\"operator\":\"is Empty\",\"rightValType\":\"column\",\"resultValType\":\"static\",\"resultVal\":\"0\"}},{\"condition\":\"Default\",\"newColumnContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"column\",\"resultVal\":\"Percentage CPU (Average)\"}}]},{\"originalName\":\"[CPU data].microsoft.compute/virtualmachines--Percentage CPU\"},{\"originalName\":\"[CPU data].microsoft.compute/virtualmachines--Percentage CPU Timeline\"},{\"originalName\":\"[CPU data].Percentage CPU (Average)\"},{\"originalName\":\"[CPU data].Percentage CPU Timeline\"}]}",
+                "size": 0,
+                "title": "CPU usage",
+                "showExportToExcel": true,
+                "queryType": 7,
+                "visualization": "graph",
+                "graphSettings": {
+                  "type": 2,
+                  "topContent": {
+                    "columnMatch": "Name",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": false
+                    }
+                  },
+                  "centerContent": {
+                    "columnMatch": "Text",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "linkTarget": "WorkbookTemplate",
+                      "linkIsContextBlade": true,
+                      "showIcon": true,
+                      "workbookContext": {
+                        "componentIdSource": "column",
+                        "componentId": "Name",
+                        "resourceIdsSource": "column",
+                        "resourceIds": "Name",
+                        "templateIdSource": "static",
+                        "templateId": "Community-Workbooks/Virtual Machines/Virtual machine details",
+                        "typeSource": "static",
+                        "type": "workbook",
+                        "gallerySource": "static",
+                        "gallery": "microsoft.compute/virtualmachines"
+                      }
+                    },
+                    "numberFormat": {
+                      "unit": 1,
+                      "options": {
+                        "style": "decimal",
+                        "maximumFractionDigits": 1
+                      }
+                    }
+                  },
+                  "hivesContent": {
+                    "columnMatch": "Subscription",
+                    "formatter": 15,
+                    "formatOptions": {
+                      "linkTarget": null,
+                      "showIcon": true
+                    }
+                  },
+                  "nodeIdField": "Name",
+                  "nodeSize": null,
+                  "staticNodeSize": 100,
+                  "colorSettings": {
+                    "nodeColorField": "Value",
+                    "type": 4,
+                    "heatmapPalette": "greenRed",
+                    "heatmapMin": 0,
+                    "heatmapMax": 100
+                  },
+                  "groupByField": "Subscription",
+                  "hivesMargin": 5
+                }
+              },
+              "name": "CPU heatmap merge control"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "💡 _Click on the CPU usage metric in a cell to see more details about the virtual machine_\r\n<br />"
+              },
+              "name": "text - 4"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "resources\r\n| where type == \"microsoft.compute/virtualmachines\"\r\n| where resourceGroup in~ ({ResourceGroups})\r\n| where id in~ ({VirtualMachines})\r\n| extend NicID = tostring(properties.networkProfile.networkInterfaces[0].id).tolower(),\r\n         OS = tostring(properties.storageProfile.osDisk.osType),\r\n         VMSize = tostring(properties.hardwareProfile.vmSize),\r\n         LowerId = tolower(id)\r\n| join (\r\n    resources \r\n    | where type == \"microsoft.network/networkinterfaces\"\r\n    | extend NicID = tostring(id).tolower(),\r\n             PrimaryIP = tostring(properties.ipConfigurations[0].properties.privateIPAddress),\r\n             SubnetName = substring(properties.ipConfigurations[0].properties.subnet.id, indexof(properties.ipConfigurations[0].properties.subnet.id, '/subnets') + 9, strlen(properties.ipConfigurations[0].properties.subnet.id))\r\n    | project NicID, PrimaryIP, SubnetName\r\n) on NicID\r\n| join (\r\n    resources \r\n    | where type == \"microsoft.compute/disks\"\r\n    | where managedBy != \"\"\r\n    | extend LowerManagedBy = tolower(managedBy)\r\n    | project LowerManagedBy, DiskName=name\r\n) on $left.LowerId == $right.LowerManagedBy\r\n| summarize DiskNames = make_list(DiskName) by LowerId, name, resourceGroup, OS, VMSize, PrimaryIP, SubnetName\r\n| project Name=LowerId, RG=resourceGroup, OS, VMSize, PrimaryIP, SubnetName, DiskNames\r\n",
+                "size": 0,
+                "title": "Hardware (current time)",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                  "{Subscriptions}"
+                ],
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "DiskNames",
+                      "formatter": 1
+                    }
+                  ],
+                  "labelSettings": [
+                    {
+                      "columnId": "RG",
+                      "label": "Resource Group"
+                    },
+                    {
+                      "columnId": "VMSize",
+                      "label": "VM Size"
+                    },
+                    {
+                      "columnId": "PrimaryIP",
+                      "label": "IP"
+                    },
+                    {
+                      "columnId": "SubnetName",
+                      "label": "Subnet"
+                    },
+                    {
+                      "columnId": "DiskNames",
+                      "label": "Disks"
+                    }
+                  ]
+                },
+                "sortBy": []
+              },
+              "name": "query - 0"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Overview"
+        },
+        "name": "Overview"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbook3fdb1843-c2e1-4420-8e67-e3367994134f",
+                "version": "MetricsItem/2.0",
+                "size": 0,
+                "chartType": 2,
+                "color": "blue",
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Percentage CPU",
+                    "aggregation": 4
+                  }
+                ],
+                "title": "Percentage CPU",
+                "graphSettings": {
+                  "type": 0,
+                  "topContent": {
+                    "columnMatch": "Subscription",
+                    "formatter": 1
+                  },
+                  "centerContent": {
+                    "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU",
+                    "formatter": 1,
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  }
+                },
+                "showOpenInMe": true,
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "Subscription",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Name",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": "Resource"
+                      }
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU Timeline",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "formatter": 1,
+                      "numberFormat": {
+                        "unit": 1,
+                        "options": null
+                      }
+                    }
+                  ],
+                  "rowLimit": 10000,
+                  "labelSettings": [
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU",
+                      "label": "Percentage CPU (Average)"
+                    },
+                    {
+                      "columnId": "microsoft.compute/virtualmachines--Percentage CPU Timeline",
+                      "label": "Percentage CPU Timeline"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "metric - 3"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "*Percentage CPU* is the percentage of allocated compute units that are currently in use by the Virtual Machine(s)."
+              },
+              "name": "text - 4"
+            },
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbook3fdb1843-c2e1-4420-8e67-e3367994134f",
+                "version": "MetricsItem/2.0",
+                "size": 0,
+                "chartType": 2,
+                "color": "orange",
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Disk Read Bytes",
+                    "aggregation": 4
+                  }
+                ],
+                "title": "Disk Reads",
+                "showOpenInMe": true,
+                "gridSettings": {
+                  "rowLimit": 10000
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "metric - 8"
+            },
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbook3fdb1843-c2e1-4420-8e67-e3367994134f",
+                "version": "MetricsItem/2.0",
+                "size": 0,
+                "chartType": 2,
+                "color": "orange",
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Disk Write Bytes",
+                    "aggregation": 4
+                  }
+                ],
+                "title": "Disk Writes",
+                "showOpenInMe": true,
+                "gridSettings": {
+                  "rowLimit": 10000
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "metric - 9"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "*Disk reads* is the average bytes read from disk during monitoring period."
+              },
+              "customWidth": "50",
+              "name": "text - 10"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "*Disk writes* is the average bytes written to disk during monitoring period."
+              },
+              "customWidth": "50",
+              "name": "text - 11"
+            },
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbook3fdb1843-c2e1-4420-8e67-e3367994134f",
+                "version": "MetricsItem/2.0",
+                "size": 0,
+                "chartType": 2,
+                "color": "green",
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Network In",
+                    "aggregation": 4
+                  }
+                ],
+                "title": "Network In",
+                "showOpenInMe": true,
+                "gridSettings": {
+                  "rowLimit": 10000
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "metric - 15"
+            },
+            {
+              "type": 10,
+              "content": {
+                "chartId": "workbook3fdb1843-c2e1-4420-8e67-e3367994134f",
+                "version": "MetricsItem/2.0",
+                "size": 0,
+                "chartType": 2,
+                "color": "green",
+                "resourceType": "microsoft.compute/virtualmachines",
+                "metricScope": 0,
+                "resourceParameter": "VirtualMachines",
+                "resourceIds": [
+                  "{VirtualMachines}"
+                ],
+                "timeContextFromParameter": "TimeRange",
+                "timeContext": {
+                  "durationMs": 604800000
+                },
+                "metrics": [
+                  {
+                    "namespace": "microsoft.compute/virtualmachines",
+                    "metric": "microsoft.compute/virtualmachines--Network Out",
+                    "aggregation": 4
+                  }
+                ],
+                "title": "Network Out",
+                "showOpenInMe": true,
+                "gridSettings": {
+                  "rowLimit": 10000
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "metric - 16"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "*Network In*  is the number of bytes received on all network interfaces by the Virtual Machine(s) (Incoming Traffic)."
+              },
+              "customWidth": "50",
+              "name": "text - 17"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "*Network out* is the number of bytes out on all network interfaces by the Virtual Machine(s) (Outgoing Traffic)."
+              },
+              "customWidth": "50",
+              "name": "text - 18"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Perf\r\n| where _ResourceId in~ ({VirtualMachines})\r\n| where CounterName == \"% Used Memory\" or CounterName == \"% Committed Bytes In Use\"\r\n| summarize MemoryPercentAvg = avg(CounterValue) by bin(TimeGenerated, 15m), Computer",
+                "size": 0,
+                "aggregation": 3,
+                "showAnalytics": true,
+                "title": "Percent Memory",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "linechart",
+                "chartSettings": {
+                  "xAxis": "TimeGenerated",
+                  "yAxis": [
+                    "MemoryPercentAvg"
+                  ],
+                  "seriesLabelSettings": [
+                    {
+                      "seriesName": "vac21appfmt0200.va.gov",
+                      "color": "purple"
+                    },
+                    {
+                      "seriesName": "vac21sasfmt0200.va.gov",
+                      "color": "purple"
+                    },
+                    {
+                      "color": "purple"
+                    }
+                  ],
+                  "xSettings": {},
+                  "ySettings": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              },
+              "showPin": true,
+              "name": "query - 5"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Metrics"
+        },
+        "name": "Metrics"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "let timeRangeStart = {TimeRange:start};\r\nlet timeRangeEnd = {TimeRange:end};\r\nHeartbeat\r\n| where ResourceType == \"virtualMachines\"\r\n| extend ResourceGroup = case(ResourceGroup <> \"\", ResourceGroup, \"On-Prem\")\r\n| where TimeGenerated > timeRangeStart and TimeGenerated < timeRangeEnd and toupper(ResourceId) in~ ({VirtualMachines})\r\n| summarize heartbeat_per_hour=count() by bin_at(TimeGenerated, 1h, timeRangeStart), ResourceId, ResourceGroup\r\n| extend available_per_hour=iff(heartbeat_per_hour>0, true, false)\r\n| extend upperRG = toupper(ResourceGroup)\r\n| extend upperID = toupper(ResourceId)\r\n| summarize total_available_hours=countif(available_per_hour==true) by upperID,upperRG\r\n| extend total_number_of_buckets=round((timeRangeEnd-timeRangeStart)/1h)\r\n| extend round(availability_rate=total_available_hours*100/total_number_of_buckets,2)\r\n| order by availability_rate asc",
+                "size": 2,
+                "showAnalytics": true,
+                "title": "VM availability",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "ResourceId",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "ResourceGroup",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "availability_rate",
+                      "formatter": 3,
+                      "formatOptions": {
+                        "min": 0,
+                        "max": 100,
+                        "palette": "redGreen",
+                        "aggregation": "Average"
+                      },
+                      "numberFormat": {
+                        "unit": 1,
+                        "options": {
+                          "style": "decimal"
+                        }
+                      }
+                    },
+                    {
+                      "columnMatch": "upperRG",
+                      "formatter": 5
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "upperRG"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "upperID",
+                      "label": "Resource Name"
+                    },
+                    {
+                      "columnId": "upperRG",
+                      "label": "Resource Group"
+                    },
+                    {
+                      "columnId": "total_available_hours",
+                      "label": "Available Hours"
+                    },
+                    {
+                      "columnId": "total_number_of_buckets",
+                      "label": "Total Hours"
+                    },
+                    {
+                      "columnId": "availability_rate",
+                      "label": "Availability"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 5"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Availability"
+        },
+        "name": "Availability"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Event​\r\n| where TimeGenerated {TimeRange}\r\n| where _ResourceId in~ ({VirtualMachines})\r\n| where EventLog == \"System\" and Source == \"Microsoft-Windows-Kernel-Power\"​\r\n| where EventID == 41​\r\n| summarize KPIValue = count() by bin(TimeGenerated,  ({TimeRange:end} - {TimeRange:start})/100), Computer",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Unexpected VM Reboots",
+                "noDataMessage": "No unexpected reboots.",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "tileSettings": {
+                  "showBorder": false,
+                  "titleContent": {
+                    "columnMatch": "Computer",
+                    "formatter": 1
+                  },
+                  "leftContent": {
+                    "columnMatch": "KPIValue",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "palette": "auto"
+                    },
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  }
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "query - 9"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Event​\r\n| where TimeGenerated {TimeRange}\r\n| where _ResourceId in~ ({VirtualMachines})\r\n| where EventLog == \"System\" and Source == \"Microsoft-Windows-WER-SystemErrorReporting\" and EventLevelName == \"Error\"​\r\n| where EventID == 1001​​\r\n| summarize KPIValue = count() by bin(TimeGenerated,  ({TimeRange:end} - {TimeRange:start})/100), Computer",
+                "size": 0,
+                "showAnalytics": true,
+                "title": " VM Crashes",
+                "noDataMessage": "No VM crashes.",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "tileSettings": {
+                  "showBorder": false,
+                  "titleContent": {
+                    "columnMatch": "Computer",
+                    "formatter": 1
+                  },
+                  "leftContent": {
+                    "columnMatch": "KPIValue",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "palette": "auto"
+                    },
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  }
+                }
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "query - 10"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "WindowsLogs"
+        },
+        "name": "windows Logs"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationChange\r\n| where _ResourceId in~ ({VirtualMachines})\r\n| summarize count(ConfigChangeType) by ConfigChangeType, Computer, _ResourceId",
+                "size": 4,
+                "showAnalytics": true,
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "tiles",
+                "tileSettings": {
+                  "titleContent": {
+                    "columnMatch": "ConfigChangeType",
+                    "formatter": 1,
+                    "formatOptions": {}
+                  },
+                  "subtitleContent": {
+                    "columnMatch": "Computer",
+                    "formatOptions": {}
+                  },
+                  "leftContent": {
+                    "columnMatch": "count_ConfigChangeType",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "palette": "auto",
+                      "linkColumn": "_ResourceId",
+                      "linkTarget": "Resource",
+                      "subTarget": "changeTracking",
+                      "linkIsContextBlade": false,
+                      "bladeOpenContext": {
+                        "bladeParameters": []
+                      }
+                    },
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "style": "decimal",
+                        "useGrouping": false,
+                        "maximumFractionDigits": 2,
+                        "maximumSignificantDigits": 3
+                      }
+                    }
+                  },
+                  "showBorder": false,
+                  "sortCriteriaField": "Computer"
+                }
+              },
+              "showPin": true,
+              "name": "query - 5"
+            },
+            {
+              "type": 1,
+              "content": {
+                "json": "💡 _Click on the values in a cell to see more details about the changes made to the VM\r\n<br />"
+              },
+              "name": "text - 6"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationChange\r\n| where ConfigChangeType == \"WindowsServices\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| project TimeGenerated, Computer, SvcDisplayName, ChangeCategory, SvcState, SvcAccount ",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Service Changes",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "$gen_group",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "Computer",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "Computer"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "TimeGenerated",
+                      "label": "Time Generated"
+                    },
+                    {
+                      "columnId": "SvcDisplayName",
+                      "label": "Service Name"
+                    },
+                    {
+                      "columnId": "ChangeCategory",
+                      "label": "Change Category"
+                    },
+                    {
+                      "columnId": "SvcState",
+                      "label": "State"
+                    },
+                    {
+                      "columnId": "SvcAccount",
+                      "label": "Account"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 2"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationChange\r\n| where ConfigChangeType == \"Software\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| project TimeGenerated, Computer, ChangeCategory, SoftwareName, Publisher, Current ",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Software Changes",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "Computer",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "Computer"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "sortBy": [
+                    {
+                      "itemKey": "TimeGenerated",
+                      "sortOrder": 2
+                    }
+                  ],
+                  "labelSettings": [
+                    {
+                      "columnId": "TimeGenerated",
+                      "label": "Time Generated"
+                    },
+                    {
+                      "columnId": "ChangeCategory",
+                      "label": "Change Catagory"
+                    },
+                    {
+                      "columnId": "SoftwareName",
+                      "label": "Software Name"
+                    },
+                    {
+                      "columnId": "Current",
+                      "label": "Current State"
+                    }
+                  ]
+                },
+                "sortBy": [
+                  {
+                    "itemKey": "TimeGenerated",
+                    "sortOrder": 2
+                  }
+                ]
+              },
+              "showPin": true,
+              "name": "query - 3"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationChange\r\n| where ConfigChangeType == \"Files\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| project TimeGenerated, Computer, ChangeCategory, FileSystemPath, FieldsChanged ",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "File changes",
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "Computer",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "Computer"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "TimeGenerated",
+                      "label": "Time Generated"
+                    },
+                    {
+                      "columnId": "ChangeCategory",
+                      "label": "Change Category"
+                    },
+                    {
+                      "columnId": "FileSystemPath",
+                      "label": "File Path"
+                    },
+                    {
+                      "columnId": "FieldsChanged",
+                      "label": "fields Changed"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 4"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "ChangeTracking"
+        },
+        "name": "Inventory and Change Tracking"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Update\r\n| where ResourceId in~ ({VirtualMachines})\r\n| where TimeGenerated <= {TimeRange:end} and TimeGenerated >= ({TimeRange:end} - 24h)\r\n| extend UniqueUpdateID = strcat(Product, \" \", ProductVersion, \" \", ProductArch, \" \", PackageRepository, \" \", UpdateID)\r\n| summarize hint.strategy=partitioned arg_max(TimeGenerated, *) by ResourceId, UniqueUpdateID\r\n| summarize count(UpdateID) by UpdateState  ",
+                "size": 4,
+                "showAnalytics": true,
+                "title": "Patch State (last status of time range)",
+                "timeContext": {
+                  "durationMs": 0
+                },
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "piechart"
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "query - 9"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Update\r\n| where ResourceId in~ ({VirtualMachines})\r\n| where TimeGenerated <= {TimeRange:end} and TimeGenerated >= ({TimeRange:end} - 24h)\r\n| extend UniqueUpdateID = strcat(Product, \" \", ProductVersion, \" \", ProductArch, \" \", PackageRepository, \" \", UpdateID)\r\n| summarize hint.strategy=partitioned arg_max(TimeGenerated, *) by ResourceId, UniqueUpdateID\r\n| where UpdateState=~\"Needed\"\r\n| summarize count(UpdateState) by Computer  ",
+                "size": 4,
+                "showAnalytics": true,
+                "title": "Updates by VM (last status of time range)",
+                "timeContext": {
+                  "durationMs": 0
+                },
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "piechart"
+              },
+              "customWidth": "50",
+              "showPin": true,
+              "name": "query - 4"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Update\r\n| where OSType != \"Linux\"\r\n| where ResourceId in~ ({VirtualMachines})\r\n| where TimeGenerated <= {TimeRange:end} and TimeGenerated >= ({TimeRange:end} - 24h)\r\n| summarize arg_max(TimeGenerated, *) by KBID, Computer\r\n| where UpdateState != \"Installed\" and UpdateState != \"NotNeeded\"\r\n| project ResourceId, UpdateState, KBID, Title, Classification, Product, PublishedDate;\r\n",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Windows Updates Needed (last status of time range)",
+                "timeContext": {
+                  "durationMs": 0
+                },
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "$gen_group",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "ResourceId",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "ResourceId"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "ResourceId"
+                    },
+                    {
+                      "columnId": "Title"
+                    },
+                    {
+                      "columnId": "Classification"
+                    },
+                    {
+                      "columnId": "Product"
+                    },
+                    {
+                      "columnId": "PublishedDate",
+                      "label": "Publish Date"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 0"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Update\r\n| where OSType =~ \"Linux\"\r\n| where ResourceId in~ ({VirtualMachines})\r\n| where TimeGenerated <= {TimeRange:end} and TimeGenerated >= ({TimeRange:end} - 24h)\r\n| extend UpdateFullName = strcat(Product, \" \", ProductVersion, \" \", ProductArch, \" \", PackageRepository)\r\n| summarize arg_max(TimeGenerated, *) by UpdateFullName, Computer\r\n| where UpdateState != \"Installed\" and UpdateState != \"NotNeeded\"\r\n| project ResourceId, UpdateState, Product, ProductVersion, ProductArch, PackageRepository, OSName",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Linux Package Updates Needed (last status of time range)",
+                "timeContext": {
+                  "durationMs": 0
+                },
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "$gen_group",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "ResourceId",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "ResourceId"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "ResourceId"
+                    },
+                    {
+                      "columnId": "Product"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 0 - Copy"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "UpdateRunProgress \r\n| where ResourceId in~ ({VirtualMachines})\r\n| where InstallationStatus != \"NotStarted\" \r\n| project ResourceId,Title, InstallationStatus, TimeGenerated",
+                "size": 0,
+                "showAnalytics": true,
+                "title": "Latest patches applies",
+                "timeContext": {
+                  "durationMs": 0
+                },
+                "timeContextFromParameter": "TimeRange",
+                "showExportToExcel": true,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "$gen_group",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "ResourceId",
+                      "formatter": 5,
+                      "formatOptions": {}
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "ResourceId"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "ResourceId"
+                    },
+                    {
+                      "columnId": "Title"
+                    },
+                    {
+                      "columnId": "InstallationStatus",
+                      "label": "Installation Status"
+                    },
+                    {
+                      "columnId": "TimeGenerated",
+                      "label": "Time Generated"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 5"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Patching"
+        },
+        "name": "Patching"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Resources\r\n| where id in~ ({VirtualMachines})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| project VMid = tolower(tostring(id)), vmName = name\r\n| join kind=inner (\r\n    Resources\r\n    | where type =~ \"microsoft.compute/virtualmachines/extensions\"\r\n\t| extend VMid = tolower(substring(id, 0, strlen(id) - strlen(strcat(\"/extensions/\", name)))))\r\non VMid\r\n| project VMid, id, name, properties.provisioningState, properties.type, properties.autoUpgradeMinorVersion",
+                "size": 0,
+                "title": "Extnesion states (current time)",
+                "showExportToExcel": true,
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                  "{Subscriptions}"
+                ],
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "id",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "properties_provisioningState",
+                      "formatter": 18,
+                      "formatOptions": {
+                        "thresholdsOptions": "colors",
+                        "thresholdsGrid": [
+                          {
+                            "operator": "==",
+                            "thresholdValue": "Succeeded",
+                            "representation": "green",
+                            "text": "{0}{1}"
+                          },
+                          {
+                            "operator": "==",
+                            "thresholdValue": "Failed",
+                            "representation": "redBright",
+                            "text": "{0}{1}"
+                          },
+                          {
+                            "operator": "Default",
+                            "thresholdValue": null,
+                            "representation": "orange",
+                            "text": "{0}{1}"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "columnMatch": "properties_type",
+                      "formatter": 1
+                    },
+                    {
+                      "columnMatch": "properties_autoUpgradeMinorVersion",
+                      "formatter": 18,
+                      "formatOptions": {
+                        "thresholdsOptions": "icons",
+                        "thresholdsGrid": [
+                          {
+                            "operator": "==",
+                            "thresholdValue": "false",
+                            "representation": "success",
+                            "text": "False"
+                          },
+                          {
+                            "operator": "==",
+                            "thresholdValue": "true",
+                            "representation": "2",
+                            "text": "True"
+                          },
+                          {
+                            "operator": "Default",
+                            "thresholdValue": null,
+                            "representation": "question",
+                            "text": ""
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "labelSettings": [
+                    {
+                      "columnId": "VMid",
+                      "label": "VM"
+                    },
+                    {
+                      "columnId": "name",
+                      "label": "Extension Name"
+                    },
+                    {
+                      "columnId": "properties_provisioningState",
+                      "label": "Provision State"
+                    },
+                    {
+                      "columnId": "properties_type",
+                      "label": "Extension Type"
+                    },
+                    {
+                      "columnId": "properties_autoUpgradeMinorVersion",
+                      "label": "Auot-Upgrade"
+                    }
+                  ]
+                }
+              },
+              "showPin": true,
+              "name": "query - 3"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Resources\r\n| where id in~ ({VirtualMachines})\r\n| where type == 'microsoft.compute/virtualmachines'\r\n| extend\r\n    JoinID = toupper(id),\r\n    OSType = tostring(properties.storageProfile.osDisk.osType)\r\n| join kind=leftouter(\r\n    resources\r\n    | where type == \"microsoft.compute/virtualmachines/extensions\"\r\n    | where toupper(properties.type) == \"OMSAGENTFORLINUX\" or toupper(properties.type) == \"MICROSOFTMONITORINGAGENT\"\r\n    | extend \r\n        VMId = toupper(substring(id, 0, indexof(id, '/extensions'))),\r\n        type = tostring(properties.type),\r\n        provisioningState = tostring(properties.provisioningState),\r\n        autoUpgradeMinorVersion = tostring(properties.autoUpgradeMinorVersion),\r\n        typeHandlerVersion = tostring(properties.typeHandlerVersion),\r\n        workspaceId = tostring(properties.settings.workspaceId)\r\n    | project  VMId, type, provisioningState, autoUpgradeMinorVersion, typeHandlerVersion, workspaceId\r\n) on $left.JoinID == $right.VMId\r\n| project toupper(id), name, resourceGroup, subscriptionId, OSType, OMSAgentType=type1, provisioningState, autoUpgradeMinorVersion, typeHandlerVersion, LogAWorkspaceId=workspaceId",
+                "size": 0,
+                "title": "Resource graph",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                  "{Subscriptions}"
+                ]
+              },
+              "conditionalVisibility": {
+                "parameterName": "1",
+                "comparison": "isEqualTo",
+                "value": "2"
+              },
+              "name": "ResourceGraph"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Heartbeat\r\n| where ResourceId in~ ({VirtualMachines})\r\n| make-series Trend = count() default = 0 on TimeGenerated from ago(1d) to now() step 1h by Computer, toupper(ResourceId)\r\n| project-away TimeGenerated",
+                "size": 0,
+                "title": "Heartbeat",
+                "timeContextFromParameter": "TimeRange",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ]
+              },
+              "conditionalVisibility": {
+                "parameterName": "1",
+                "comparison": "isEqualTo",
+                "value": "2"
+              },
+              "name": "HeartbeatData"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "Perf\r\n| where _ResourceId in~ ({VirtualMachines})\r\n| where CounterName == \"% Processor Time\" and InstanceName == \"_Total\"\r\n| make-series Trend = count() default = 0 on TimeGenerated from ago(1d) to now() step 1h by Computer, toupper(_ResourceId)\r\n| project-away TimeGenerated",
+                "size": 0,
+                "title": "Perf",
+                "timeContextFromParameter": "TimeRange",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ]
+              },
+              "conditionalVisibility": {
+                "parameterName": "1",
+                "comparison": "isEqualTo",
+                "value": "2"
+              },
+              "name": "PerfData"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"2000d66e-f816-4731-857c-0898385e2249\",\"mergeType\":\"leftouter\",\"leftTable\":\"ResourceGraph\",\"rightTable\":\"HeartbeatData\",\"leftColumn\":\"Column1\",\"rightColumn\":\"Column1\"},{\"id\":\"2000d66e-f816-4731-857c-0898385e224a\",\"mergeType\":\"leftouter\",\"leftTable\":\"ResourceGraph\",\"rightTable\":\"PerfData\",\"leftColumn\":\"Column1\",\"rightColumn\":\"Column1\"}],\"projectRename\":[{\"originalName\":\"[ResourceGraph].Column1\",\"mergedName\":\"Column1\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].name\",\"mergedName\":\"name\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].resourceGroup\",\"mergedName\":\"resourceGroup\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].OMSAgentType\",\"mergedName\":\"OMSAgentType\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].provisioningState\",\"mergedName\":\"provisioningState\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].autoUpgradeMinorVersion\",\"mergedName\":\"autoUpgradeMinorVersion\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].typeHandlerVersion\",\"mergedName\":\"typeHandlerVersion\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[ResourceGraph].LogAWorkspaceId\",\"mergedName\":\"LogAWorkspaceId\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[HeartbeatData].Computer\",\"mergedName\":\"Computer\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[HeartbeatData].Column1\",\"mergedName\":\"Column11\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[HeartbeatData].Trend\",\"mergedName\":\"Trend\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2249\"},{\"originalName\":\"[PerfData].Computer\",\"mergedName\":\"Computer1\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e224a\"},{\"originalName\":\"[PerfData].Column1\",\"mergedName\":\"Column12\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e224a\"},{\"originalName\":\"[PerfData].Trend\",\"mergedName\":\"Trend1\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e224a\"}]}",
+                "size": 1,
+                "title": "Log Analytics reporting trends",
+                "queryType": 7,
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "name",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "resourceGroup",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "subscriptionId",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Computer",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Column11",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Trend",
+                      "formatter": 10,
+                      "formatOptions": {
+                        "min": 0,
+                        "max": 60,
+                        "palette": "redGreen"
+                      }
+                    },
+                    {
+                      "columnMatch": "Computer1",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Column12",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "Trend1",
+                      "formatter": 10,
+                      "formatOptions": {
+                        "min": 0,
+                        "palette": "redGreen",
+                        "customColumnWidthSetting": "12ch"
+                      }
+                    }
+                  ],
+                  "labelSettings": [
+                    {
+                      "columnId": "Column1",
+                      "label": "Computer"
+                    },
+                    {
+                      "columnId": "provisioningState",
+                      "label": "ProvisioningState"
+                    },
+                    {
+                      "columnId": "autoUpgradeMinorVersion",
+                      "label": "AutoUpgradeMinorVersion"
+                    },
+                    {
+                      "columnId": "typeHandlerVersion",
+                      "label": "TypeHandlerVersion"
+                    },
+                    {
+                      "columnId": "Trend",
+                      "label": "Heartbeat Trend"
+                    },
+                    {
+                      "columnId": "Trend1",
+                      "label": "Perf Trend"
+                    }
+                  ]
+                }
+              },
+              "showPin": false,
+              "name": "query - 7"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"2000d66e-f816-4731-857c-0898385e2268\",\"mergeType\":\"rightanti\",\"leftTable\":\"ResourceGraph\",\"rightTable\":\"HeartbeatData\",\"leftColumn\":\"Column1\",\"rightColumn\":\"Column1\"}],\"projectRename\":[{\"originalName\":\"[HeartbeatData].Computer\",\"mergedName\":\"Computer\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2268\"},{\"originalName\":\"[HeartbeatData].Column1\",\"mergedName\":\"Column1\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2268\"},{\"originalName\":\"[HeartbeatData].Trend\",\"mergedName\":\"Trend\",\"fromId\":\"2000d66e-f816-4731-857c-0898385e2268\"}]}",
+                "size": 0,
+                "title": "VMs writing to LogA not in Data Estate (Writting data to wrong workspace)",
+                "queryType": 7,
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "Trend",
+                      "formatter": 10,
+                      "formatOptions": {
+                        "palette": "redGreen"
+                      }
+                    }
+                  ]
+                }
+              },
+              "showPin": false,
+              "name": "query - 5"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Extensions"
+        },
+        "name": "Extensions"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationData \r\n| where ConfigDataType == \"Software\" \r\n| where SoftwareType == \"Application\" or SoftwareType == \"Package\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| extend NameVer = strcat(SoftwareName, Publisher)\r\n| summarize hint.strategy=partitioned arg_max(TimeGenerated, *) by _ResourceId, NameVer\r\n| summarize count() by _ResourceId\r\n| extend BottomText = \"Installed applications\"",
+                "size": 4,
+                "title": "Software Installed by VM",
+                "timeContextFromParameter": "TimeRange",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "tiles",
+                "tileSettings": {
+                  "titleContent": {
+                    "columnMatch": "_ResourceId",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": null,
+                      "showIcon": true
+                    }
+                  },
+                  "leftContent": {
+                    "columnMatch": "count_",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "palette": "auto"
+                    },
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  },
+                  "secondaryContent": {
+                    "columnMatch": "BottomText"
+                  },
+                  "showBorder": false
+                }
+              },
+              "customWidth": "50",
+              "name": "query - 1"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationData \r\n| where ConfigDataType == \"Software\" \r\n| where SoftwareType == \"Application\" or SoftwareType == \"Package\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| extend NameVer = strcat(SoftwareName, Publisher)\r\n| summarize hint.strategy=partitioned arg_max(TimeGenerated, *) by _ResourceId, NameVer\r\n| summarize count() by Publisher",
+                "size": 4,
+                "title": "Software Installed by Publisher",
+                "timeContextFromParameter": "TimeRange",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "piechart",
+                "graphSettings": {
+                  "type": 2,
+                  "topContent": {
+                    "columnMatch": "Publisher",
+                    "formatter": 1
+                  },
+                  "centerContent": {
+                    "columnMatch": "count_",
+                    "formatter": 1,
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  },
+                  "nodeIdField": "Publisher",
+                  "sourceIdField": "Publisher",
+                  "targetIdField": "count_",
+                  "graphOrientation": 3,
+                  "showOrientationToggles": false,
+                  "nodeSize": null,
+                  "staticNodeSize": 100,
+                  "colorSettings": null,
+                  "hivesMargin": 5
+                }
+              },
+              "customWidth": "50",
+              "name": "query - 2"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "ConfigurationData \r\n| where ConfigDataType == \"Software\" \r\n| where SoftwareType == \"Application\" or SoftwareType == \"Package\" \r\n| where _ResourceId in~ ({VirtualMachines})\r\n| extend NameVer = strcat(SoftwareName, Publisher)\r\n| summarize hint.strategy=partitioned arg_max(TimeGenerated, *) by _ResourceId, NameVer\r\n| project _ResourceId, SoftwareName, Publisher, CurrentVersion",
+                "size": 0,
+                "title": "Installed Software",
+                "timeContextFromParameter": "TimeRange",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "crossComponentResources": [
+                  "{LogAnalytics}"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                  "formatters": [
+                    {
+                      "columnMatch": "$gen_group",
+                      "formatter": 13,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "_ResourceId",
+                      "formatter": 5
+                    }
+                  ],
+                  "hierarchySettings": {
+                    "treeType": 1,
+                    "groupBy": [
+                      "_ResourceId"
+                    ],
+                    "expandTopLevel": true
+                  },
+                  "labelSettings": [
+                    {
+                      "columnId": "_ResourceId",
+                      "label": "Computer"
+                    }
+                  ]
+                }
+              },
+              "name": "query - 0"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "Inventory"
+        },
+        "name": "Inventory"
+      }
+    ],
+    "fallbackResourceIds": [
+      "/subscriptions/1e5b8da5-fbcf-4f83-b932-ed8af1530065/resourcegroups/fmbt-fmbtprod-int-south-reporting-rg/providers/microsoft.operationalinsights/workspaces/fmbt-prod-int-east-deoms"
+    ],
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+  }

@@ -1,0 +1,159 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "items": [
+          {
+            "name": "Tag Filters",
+            "items": [
+              {
+                "type": 5,
+                "content": {
+                  "version": "KqlParameterItem/1.0",
+                  "parameters": [
+                    {
+                      "name": "emassId",
+                      "type": 1,
+                      "isRequired": false,
+                      "multiSelect": true,
+                      "defaultValue": [],
+                      "query": "Resources | extend emassId = tostring(tags['va_emass_id']) | where isnotempty(emassId) | distinct emassId | order by emassId asc",
+                      "valueColumn": "emassId",
+                      "label": "Filter by EMASS ID"
+                    },
+                    {
+                      "name": "ckid",
+                      "type": 1,
+                      "isRequired": false,
+                      "multiSelect": true,
+                      "defaultValue": [],
+                      "query": "Resources | extend ckid = tostring(tags['ckid']) | where isnotempty(ckid) | distinct ckid | order by ckid asc",
+                      "valueColumn": "ckid",
+                      "label": "Filter by CKID"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Key Vaults",
+            "items": [
+              {
+                "type": 1,
+                "content": {
+                  "json": "## Key Vaults with Public Access"
+                }
+              },
+              {
+                "type": 3,
+                "content": {
+                  "version": "KqlItem/1.0",
+                  "query": "Resources\n| where type =~ 'Microsoft.KeyVault/vaults'\n| extend publicAccess = tostring(properties.networkAcls.defaultAction)\n| where publicAccess =~ 'Allow'\n| summarize count()",
+                  "visualization": "tiles",
+                  "resourceType": "microsoft.resourcegraph/resources",
+                  "queryType": 1,
+                  "crossComponentResources": [
+                    "value::all"
+                  ],
+                  "tileSettings": {
+                    "leftContent": {
+                      "columnMatch": "count_",
+                      "formatter": 12,
+                      "formatOptions": {
+                        "palette": "redGreen"
+                      }
+                    },
+                    "showBorder": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Storage Accounts",
+            "items": [
+              {
+                "type": 1,
+                "content": {
+                  "json": "## Storage Accounts with Public Access"
+                }
+              },
+              {
+                "type": 3,
+                "content": {
+                  "version": "KqlItem/1.0",
+                  "query": "Resources\n| where type =~ 'Microsoft.Storage/storageAccounts'\n| extend publicAccess = tostring(properties.networkAcls.defaultAction)\n| where publicAccess =~ 'Allow'\n| summarize count()",
+                  "visualization": "tiles",
+                  "resourceType": "microsoft.resourcegraph/resources",
+                  "queryType": 1,
+                  "crossComponentResources": [
+                    "value::all"
+                  ],
+                  "tileSettings": {
+                    "leftContent": {
+                      "columnMatch": "count_",
+                      "formatter": 12,
+                      "formatOptions": {
+                        "palette": "redGreen"
+                      }
+                    },
+                    "showBorder": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Unattached Disks",
+            "items": [
+              {
+                "type": 1,
+                "content": {
+                  "json": "## Unattached Disks"
+                }
+              },
+              {
+                "type": 3,
+                "content": {
+                  "version": "KqlItem/1.0",
+                  "query": "Resources\n| where type has 'microsoft.compute/disks'\n| extend diskState = tostring(properties.diskState)\n| where managedBy == '' or diskState == 'Unattached'\n| summarize count()",
+                  "visualization": "tiles",
+                  "resourceType": "microsoft.resourcegraph/resources",
+                  "queryType": 1,
+                  "crossComponentResources": [
+                    "value::all"
+                  ],
+                  "tileSettings": {
+                    "leftContent": {
+                      "columnMatch": "count_",
+                      "formatter": 12,
+                      "formatOptions": {
+                        "palette": "redGreen"
+                      }
+                    },
+                    "showBorder": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Filtering Guide",
+            "items": [
+              {
+                "type": 1,
+                "content": {
+                  "json": "### \ud83d\udd0d How to Filter by Tags\nTo filter by a specific tag, use this KQL:\n```kql\n| extend emassId = tostring(tags['va_emass_id'])\n| where emassId contains '123'\n```\nTo combine multiple tags:\n```kql\n| extend ckid = tostring(tags['ckid'])\n| where emassId contains '123' and ckid startswith 'CK-'\n```"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

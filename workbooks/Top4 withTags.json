@@ -1,0 +1,208 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+      {
+        "type": 1,
+        "content": {
+          "json": "## Key Vault Public URL "
+        },
+        "customWidth": "15",
+        "name": "text - 2",
+        "styleSettings": {
+          "margin": "5"
+        }
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "resources\r\n| where type =~ \"microsoft.keyvault/vaults\"\r\n| extend publicAccess = tostring(properties.networkAcls.defaultAction)\r\n| where publicAccess =~ 'Allow'\r\n| summarize count_ = count() by type\r\n| extend count_ = iff(count_ == 0, 0, count_)\r\n| union (datatable(type:string, count_:long) [\"microsoft.keyvault/vaults\", 0])\r\n| summarize total_count = max(count_) by type",
+          "size": 3,
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "visualization": "tiles",
+          "tileSettings": {
+            "titleContent": {},
+            "leftContent": {
+              "columnMatch": "total_count",
+              "formatter": 12,
+              "formatOptions": {
+                "palette": "auto"
+              }
+            },
+            "showBorder": false
+          }
+        },
+        "name": "query - 6"
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "Resources\r\n| where type =~ 'Microsoft.KeyVault/vaults'\r\n| project name, resourceGroup, location, id, type, subscriptionId, tags, properties\r\n| extend typeDisplayName = case(type =~ 'microsoft.keyvault/vaults', 'Key vault', type)\r\n| extend locationDisplayName = case(\r\n    location =~ 'usgovvirginia', 'USGov Virginia',\r\n    location =~ 'global', 'Global',\r\n    location =~ 'usdod', 'USDoD',\r\n    location =~ 'usgov', 'USGov',\r\n    location =~ 'usgovarizona', 'USGov Arizona',\r\n    location =~ 'usdodcentral', 'USDoD Central',\r\n    location =~ 'usdodeast', 'USDoD East',\r\n    location =~ 'usgovtexas', 'USGov Texas',\r\n    location\r\n)\r\n| extend va_emass_id = tostring(tags['va_emass_id'])\r\n| extend CKID = tostring(tags['CKID'])\r\n| extend va_vasi_id = tostring(tags['va_vasi_id'])\r\n| extend va_app_owner = tostring(tags['va_app_owner'])\r\n| extend keyVaultUrl = strcat('https://', name, '.vault.azure.net')\r\n| project name, resourceGroup, va_app_owner, CKID, va_vasi_id, va_emass_id, tags, keyVaultUrl\r\n| order by tostring(name) asc",
+          "size": 1,
+          "showAnalytics": true,
+          "showRefreshButton": true,
+          "showExportToExcel": true,
+          "queryType": 1,
+          "resourceType": "microsoft.resources/tenants",
+          "crossComponentResources": [
+            "value::tenant"
+          ],
+          "visualization": "table",
+          "showExpandCollapseGrid": true,
+          "gridSettings": {
+            "formatters": [
+              {
+                "columnMatch": "va_emass_id",
+                "formatter": 4,
+                "formatOptions": {
+                  "palette": "blue"
+                }
+              },
+              {
+                "columnMatch": "subscriptionId",
+                "formatter": 11
+              }
+            ],
+            "rowLimit": 900,
+            "filter": true,
+            "labelSettings": [
+              {
+                "columnId": "va_emass_id",
+                "label": "EMASS ID"
+              }
+            ]
+          }
+        },
+        "name": "query - 3"
+      },
+      {
+        "type": 1,
+        "content": {
+          "json": "## Storage Account w/ Public URL"
+        },
+        "customWidth": "25",
+        "name": "text - 5",
+        "styleSettings": {
+          "margin": "5"
+        }
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "Resources\r\n| where type =~ 'microsoft.storage/storageaccounts'\r\n| extend publicAccess = tostring(properties.networkAcls.defaultAction)\r\n| where publicAccess =~ 'Allow'\r\n| summarize count()",
+          "size": 3,
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "visualization": "tiles",
+          "tileSettings": {
+            "titleContent": {},
+            "leftContent": {
+              "columnMatch": "count_",
+              "formatter": 12,
+              "formatOptions": {
+                "palette": "auto"
+              }
+            },
+            "showBorder": false,
+            "sortCriteriaField": "count_"
+          }
+        },
+        "name": "query - 8"
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "resources \r\n| where type == 'microsoft.storage/storageaccounts'\r\n| project name, resourceGroup, location, id, type, subscriptionId, tags, properties\r\n| extend typeDisplayName = case(type =~ 'microsoft.storage/storageaccounts', 'Storage', type)\r\n| extend locationDisplayName = case(\r\n    location =~ 'usgovvirginia', 'USGov Virginia',\r\n    location =~ 'global', 'Global',\r\n    location =~ 'usdod', 'USDoD',\r\n    location =~ 'usgov', 'USGov',\r\n    location =~ 'usgovarizona', 'USGov Arizona',\r\n    location =~ 'usdodcentral', 'USDoD Central',\r\n    location =~ 'usdodeast', 'USDoD East',\r\n    location =~ 'usgovtexas', 'USGov Texas',\r\n    location\r\n)\r\n| extend va_emass_id = tostring(tags['va_emass_id'])\r\n| extend CKID = tostring(tags['CKID'])\r\n| extend va_vasi_id = tostring(tags['va_vasi_id'])\r\n| extend va_app_owner = tostring(tags['va_app_owner'])\r\n| project name, resourceGroup, va_app_owner, CKID, va_vasi_id, va_emass_id, tags\r\n| order by tostring(name) asc",
+          "size": 1,
+          "showAnalytics": true,
+          "showRefreshButton": true,
+          "showExportToExcel": true,
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "visualization": "table",
+          "showExpandCollapseGrid": true,
+          "gridSettings": {
+            "filter": true
+          }
+        },
+        "name": "query - 6"
+      },
+      {
+        "type": 1,
+        "content": {
+          "json": "## Unattached Disks ",
+          "style": "info"
+        },
+        "customWidth": "15",
+        "name": "text - 6"
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "Resources\r\n| where type has \"microsoft.compute/disks\"\r\n| extend diskState = tostring(properties.diskState)\r\n| where managedBy == \"\" or diskState == 'Unattached'\r\n| summarize count ()",
+          "size": 3,
+          "title": "Unattached Disks Count",
+          "noDataMessageStyle": 4,
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "visualization": "tiles",
+          "tileSettings": {
+            "titleContent": {},
+            "leftContent": {
+              "columnMatch": "count_",
+              "formatter": 12,
+              "formatOptions": {
+                "palette": "auto"
+              }
+            },
+            "showBorder": false
+          }
+        },
+        "name": "query - 8",
+        "styleSettings": {
+          "padding": "0"
+        }
+      },
+      {
+        "type": 3,
+        "content": {
+          "version": "KqlItem/1.0",
+          "query": "Resources\r\n| where type has \"microsoft.compute/disks\"\r\n| extend diskState = tostring(properties.diskState)\r\n| where managedBy == \"\" or diskState == 'Unattached'\r\n//where subscriptioID contains ''\r\n| project id, diskState, resourceGroup, location, subscriptionId",
+          "size": 0,
+          "showAnalytics": true,
+          "showRefreshButton": true,
+          "showExportToExcel": true,
+          "queryType": 1,
+          "resourceType": "microsoft.resourcegraph/resources",
+          "crossComponentResources": [
+            "value::all"
+          ],
+          "gridSettings": {
+            "filter": true
+          }
+        },
+        "name": "query - 7"
+      }
+    ],
+    "fallbackResourceIds": [
+      "Azure Monitor"
+    ],
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+  }
