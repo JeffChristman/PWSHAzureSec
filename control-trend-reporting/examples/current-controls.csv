@@ -1,0 +1,6 @@
+ControlId,ControlName,Status,Severity,Owner,System,AssessmentDate
+AC-2,Account Management,Compliant,High,Identity Team,Example Boundary,2026-08-31
+AU-2,Event Logging,Compliant,High,Logging Team,Example Boundary,2026-08-31
+CM-6,Configuration Settings,NonCompliant,Medium,Platform Team,Example Boundary,2026-08-31
+SC-7,Boundary Protection,NonCompliant,Critical,Network Team,Example Boundary,2026-08-31
+SI-4,System Monitoring,NonCompliant,High,Security Operations,Example Boundary,2026-08-31
