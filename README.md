@@ -24,6 +24,10 @@ The `workbooks/` directory contains reusable JSON templates for:
 - Orphaned-resource discovery
 - Operational and governance dashboards
 
+## Control trend reporting
+
+The [`control-trend-reporting`](control-trend-reporting/) example compares weekly security-control snapshots and produces CSV, JSON, and HTML management reports. It includes synthetic input data and demonstrates how repeated status reporting can be automated without publishing internal workbooks or assessment results.
+
 ## Safety and permissions
 
 - Run with a dedicated read-only identity unless a script explicitly documents another requirement.
