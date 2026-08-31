@@ -1,0 +1,19 @@
+# Assessment output
+*.csv
+*.xlsx
+*.html
+*.pdf
+output/
+reports/
+
+# Secrets and local settings
+.env
+.env.*
+local.settings.json
+*.secret
+*.secrets
+
+# Editors and logs
+.vscode/
+.idea/
+*.log
